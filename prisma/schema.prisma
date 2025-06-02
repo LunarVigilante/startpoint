@@ -1,0 +1,218 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum AssetType {
+  LAPTOP
+  DESKTOP
+  MONITOR
+  PHONE
+  TABLET
+  PRINTER
+  NETWORK_EQUIPMENT
+  OTHER_HARDWARE
+}
+
+enum AssetStatus {
+  AVAILABLE
+  ASSIGNED
+  MAINTENANCE
+  RETIRED
+  LOST
+  STOLEN
+}
+
+enum AnomalyType {
+  MISSING_STANDARD_ITEM
+  EXCESSIVE_ACCESS
+  OUTDATED_HARDWARE
+  MISSING_GROUP
+  ORPHANED_ACCESS
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  TERMINATED
+}
+
+// Models
+model Site {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users              User[]
+  assets             Asset[]
+  departmentBaselines DepartmentBaseline[]
+
+  @@map("sites")
+}
+
+model User {
+  id         String     @id @default(cuid())
+  email      String     @unique
+  employeeId String?    @unique
+  name       String
+  siteId     String
+  department String
+  jobTitle   String?
+  manager    String?
+  status     UserStatus @default(ACTIVE)
+  startDate  DateTime?
+  lastReviewed DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  // Relations
+  site               Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  assets             Asset[]
+  licenses           UserLicense[]
+  groups             UserGroup[]
+  distributionLists  UserDistributionList[]
+  anomalies          AccessAnomaly[]
+
+  @@map("users")
+}
+
+model Asset {
+  id              String      @id @default(cuid())
+  assetTag        String      @unique
+  name            String
+  type            AssetType
+  category        String?
+  manufacturer    String?
+  model           String?
+  serialNumber    String?     @unique
+  siteId          String
+  userId          String?
+  assignedDate    DateTime?
+  status          AssetStatus @default(AVAILABLE)
+  condition       String?
+  location        String?
+  purchaseDate    DateTime?
+  purchasePrice   Float?
+  vendor          String?
+  invoiceNumber   String?
+  warrantyExpiry  DateTime?
+  history         Json?       // JSON field for tracking assignment history
+  maintenanceLog  Json?       // JSON field for maintenance records
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  site Site  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("assets")
+}
+
+model UserLicense {
+  id           String    @id @default(cuid())
+  userId       String
+  name         String
+  type         String?
+  assignedDate DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_licenses")
+}
+
+model UserGroup {
+  id        String    @id @default(cuid())
+  userId    String
+  groupName String
+  groupType String?
+  system    String?
+  addedDate DateTime?
+  critical  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_groups")
+}
+
+model UserDistributionList {
+  id        String    @id @default(cuid())
+  userId    String
+  listName  String
+  listEmail String?
+  addedDate DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_distribution_lists")
+}
+
+model DepartmentBaseline {
+  id             String   @id @default(cuid())
+  department     String
+  siteId         String
+  standardAssets Json?    // JSON array of standard asset configurations
+  requiredGroups Json?    // JSON array of required group names
+  requiredLists  Json?    // JSON array of required distribution lists
+  commonLicenses Json?    // JSON array of common license types
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([department, siteId])
+  @@map("department_baselines")
+}
+
+model AccessAnomaly {
+  id          String      @id @default(cuid())
+  userId      String
+  type        AnomalyType
+  category    String?
+  description String
+  suggestion  String?
+  severity    Severity    @default(MEDIUM)
+  status      String      @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, DISMISSED
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  resolution  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("access_anomalies")
+}
