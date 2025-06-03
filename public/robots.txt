@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Block access to sensitive areas
+Disallow: /api/
+Disallow: /_next/
+Disallow: /settings
+Disallow: /offboarding
+
+# Sitemap location
+Sitemap: https://startpoint-kh0tsq8qx-epoche.vercel.app/sitemap.xml 
