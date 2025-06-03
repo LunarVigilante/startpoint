@@ -1,42 +1,42 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import prisma, { withRetry } from '@/lib/prisma';
 
 export async function GET() {
   try {
     // Get total assets count
-    const totalAssets = await prisma.asset.count();
+    const totalAssets = await withRetry(() => prisma.asset.count());
     
     // Get active users count
-    const activeUsers = await prisma.user.count({
+    const activeUsers = await withRetry(() => prisma.user.count({
       where: {
         status: 'ACTIVE',
       },
-    });
+    }));
     
     // Get open anomalies count
-    const openAnomalies = await prisma.accessAnomaly.count({
+    const openAnomalies = await withRetry(() => prisma.accessAnomaly.count({
       where: {
         status: 'OPEN',
       },
-    });
+    }));
     
     // Get asset status breakdown
-    const assetsByStatus = await prisma.asset.groupBy({
+    const assetsByStatus = await withRetry(() => prisma.asset.groupBy({
       by: ['status'],
       _count: true,
-    });
+    }));
     
     // Get users by department
-    const usersByDepartment = await prisma.user.groupBy({
+    const usersByDepartment = await withRetry(() => prisma.user.groupBy({
       by: ['department'],
       where: {
         status: 'ACTIVE',
       },
       _count: true,
-    });
+    }));
     
     // Get recent assets (last 10)
-    const recentAssets = await prisma.asset.findMany({
+    const recentAssets = await withRetry(() => prisma.asset.findMany({
       take: 10,
       orderBy: {
         updatedAt: 'desc',
@@ -49,10 +49,10 @@ export async function GET() {
           },
         },
       },
-    });
+    }));
     
     // Get recent anomalies (last 5)
-    const recentAnomalies = await prisma.accessAnomaly.findMany({
+    const recentAnomalies = await withRetry(() => prisma.accessAnomaly.findMany({
       take: 5,
       where: {
         status: 'OPEN',
@@ -68,28 +68,28 @@ export async function GET() {
           },
         },
       },
-    });
+    }));
     
     // Calculate department health scores
     const departmentStats = await Promise.all(
       usersByDepartment.map(async (dept: any) => {
         const totalDeptUsers = dept._count;
-        const deptAnomalies = await prisma.accessAnomaly.count({
+        const deptAnomalies = await withRetry(() => prisma.accessAnomaly.count({
           where: {
             status: 'OPEN',
             user: {
               department: dept.department,
             },
           },
-        });
+        }));
         
-        const deptAssets = await prisma.asset.count({
+        const deptAssets = await withRetry(() => prisma.asset.count({
           where: {
             user: {
               department: dept.department,
             },
           },
-        });
+        }));
         
         // Simple health score calculation (can be enhanced)
         const healthScore = Math.max(0, 100 - (deptAnomalies * 10));
