@@ -1,379 +1,678 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, Search, AlertTriangle, CheckCircle, User, Mail, Building } from "lucide-react";
+'use client'
 
-// Mock data for demonstration
-const users = [
-  {
-    id: "1",
-    name: "John Smith",
-    email: "john.smith@anlinwindows.com",
-    employeeId: "EMP001",
-    department: "Engineering",
-    jobTitle: "Senior Software Engineer",
-    manager: "Alice Johnson",
-    status: "ACTIVE",
-    startDate: "2023-01-15",
-    assetsCount: 3,
-    anomaliesCount: 1,
-    lastReviewed: "2024-01-15",
-  },
-  {
-    id: "2",
-    name: "Sarah Johnson",
-    email: "sarah.johnson@anlinwindows.com",
-    employeeId: "EMP002",
-    department: "Marketing",
-    jobTitle: "Marketing Manager",
-    manager: "Bob Wilson",
-    status: "ACTIVE",
-    startDate: "2022-08-20",
-    assetsCount: 2,
-    anomaliesCount: 2,
-    lastReviewed: "2024-01-10",
-  },
-  {
-    id: "3",
-    name: "Mike Davis",
-    email: "mike.davis@anlinwindows.com",
-    employeeId: "EMP003",
-    department: "Sales",
-    jobTitle: "Sales Representative",
-    manager: "Carol Brown",
-    status: "ACTIVE",
-    startDate: "2023-06-01",
-    assetsCount: 4,
-    anomaliesCount: 3,
-    lastReviewed: "2023-12-20",
-  },
-  {
-    id: "4",
-    name: "Emma Wilson",
-    email: "emma.wilson@anlinwindows.com",
-    employeeId: "EMP004",
-    department: "Engineering",
-    jobTitle: "Frontend Developer",
-    manager: "Alice Johnson",
-    status: "ACTIVE",
-    startDate: "2024-01-08",
-    assetsCount: 2,
-    anomaliesCount: 0,
-    lastReviewed: "2024-01-08",
-  },
-  {
-    id: "5",
-    name: "Alex Chen",
-    email: "alex.chen@anlinwindows.com",
-    employeeId: "EMP005",
-    department: "IT",
-    jobTitle: "System Administrator",
-    manager: "David Lee",
-    status: "ACTIVE",
-    startDate: "2023-03-15",
-    assetsCount: 5,
-    anomaliesCount: 0,
-    lastReviewed: "2024-01-12",
-  },
-];
+import { useState, useEffect } from 'react'
+import { Search, Plus, Edit, Trash2, User, MapPin, Building, Calendar, Shield } from 'lucide-react'
 
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "ACTIVE":
-      return <Badge className="bg-green-100 text-green-800">Active</Badge>;
-    case "INACTIVE":
-      return <Badge className="bg-yellow-100 text-yellow-800">Inactive</Badge>;
-    case "TERMINATED":
-      return <Badge className="bg-red-100 text-red-800">Terminated</Badge>;
-    default:
-      return <Badge variant="secondary">{status}</Badge>;
+type User = {
+  id: string
+  email: string
+  employeeId?: string | null
+  name: string
+  siteId: string
+  department: string
+  jobTitle?: string | null
+  manager?: string | null
+  status: 'ACTIVE' | 'INACTIVE' | 'TERMINATED'
+  startDate?: Date | null
+  lastReviewed?: Date | null
+  createdAt: Date
+  updatedAt: Date
+  site: {
+    name: string
+    code: string
   }
 }
 
-function getDepartmentColor(department: string) {
-  const colors: Record<string, string> = {
-    Engineering: "bg-blue-100 text-blue-800",
-    Marketing: "bg-purple-100 text-purple-800",
-    Sales: "bg-green-100 text-green-800",
-    IT: "bg-orange-100 text-orange-800",
-    HR: "bg-pink-100 text-pink-800",
-    Finance: "bg-indigo-100 text-indigo-800",
-  };
-  
-  return colors[department] || "bg-gray-100 text-gray-800";
+type NewUser = {
+  email: string
+  employeeId: string
+  name: string
+  siteCode: string
+  department: string
+  jobTitle: string
+  manager: string
+  status: 'ACTIVE' | 'INACTIVE' | 'TERMINATED'
+  startDate: string
 }
 
-function getInitials(name: string) {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase();
+const StatusColors = {
+  ACTIVE: 'bg-green-100 text-green-800',
+  INACTIVE: 'bg-yellow-100 text-yellow-800',
+  TERMINATED: 'bg-red-100 text-red-800',
 }
 
 export default function UsersPage() {
-  return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Users</h1>
-          <p className="text-gray-600">Manage user profiles and access permissions</p>
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVE' | 'INACTIVE' | 'TERMINATED'>('ALL')
+  const [filterDepartment, setFilterDepartment] = useState('ALL')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [saving, setSaving] = useState(false)
+  
+  // Form state for new user
+  const [newUser, setNewUser] = useState<NewUser>({
+    email: '',
+    employeeId: '',
+    name: '',
+    siteCode: 'HQ001',
+    department: '',
+    jobTitle: '',
+    manager: '',
+    status: 'ACTIVE',
+    startDate: '',
+  })
+
+  // Get unique departments for filter
+  const departments = Array.from(new Set(users.map(user => user.department))).sort()
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/users')
+      if (!response.ok) throw new Error('Failed to fetch users')
+      const data = await response.json()
+      setUsers(data)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = 
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.employeeId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.department.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesStatus = filterStatus === 'ALL' || user.status === filterStatus
+    const matchesDepartment = filterDepartment === 'ALL' || user.department === filterDepartment
+    
+    return matchesSearch && matchesStatus && matchesDepartment
+  })
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      setSaving(true)
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser),
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to create user')
+      }
+      
+      setNewUser({
+        email: '',
+        employeeId: '',
+        name: '',
+        siteCode: 'HQ001',
+        department: '',
+        jobTitle: '',
+        manager: '',
+        status: 'ACTIVE',
+        startDate: '',
+      })
+      setShowCreateModal(false)
+      fetchUsers() // Refresh the data
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleEditUser = (user: User) => {
+    setEditingUser(user)
+    setShowEditModal(true)
+  }
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingUser) return
+    
+    try {
+      setSaving(true)
+      const response = await fetch('/api/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingUser.id,
+          department: editingUser.department,
+          jobTitle: editingUser.jobTitle,
+          manager: editingUser.manager,
+          status: editingUser.status,
+        }),
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to update user')
+      }
+      
+      setShowEditModal(false)
+      setEditingUser(null)
+      fetchUsers() // Refresh the data
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This will also delete all associated data.')) {
+      return
+    }
+    
+    try {
+      setSaving(true)
+      const response = await fetch(`/api/users?id=${userId}`, {
+        method: 'DELETE',
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to delete user')
+      }
+      
+      fetchUsers() // Refresh the data
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
         </div>
-        <div className="flex space-x-3">
-          <Button variant="outline">
-            <Mail className="h-4 w-4 mr-2" />
-            Bulk Actions
-          </Button>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add User
-          </Button>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h3 className="text-red-800 font-medium">Error Loading Users</h3>
+          <p className="text-red-600 mt-1">{error}</p>
+          <button
+            onClick={fetchUsers}
+            className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+          <p className="text-gray-600">Manage employee accounts and access</p>
+        </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          <Plus className="w-4 h-4" />
+          Add User
+        </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center">
+            <User className="w-8 h-8 text-blue-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Users</p>
+              <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+              <Shield className="w-4 h-4 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Active</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {users.filter(u => u.status === 'ACTIVE').length}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+              <Shield className="w-4 h-4 text-yellow-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Inactive</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {users.filter(u => u.status === 'INACTIVE').length}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center">
+            <Building className="w-8 h-8 text-purple-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Departments</p>
+              <p className="text-2xl font-bold text-gray-900">{departments.length}</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Filters and Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Filter users by department, status, or search by name</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Filters */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Search Users
+            </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input placeholder="Search users..." className="pl-10" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search by name, email, employee ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
-            
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Department" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Departments</SelectItem>
-                <SelectItem value="engineering">Engineering</SelectItem>
-                <SelectItem value="marketing">Marketing</SelectItem>
-                <SelectItem value="sales">Sales</SelectItem>
-                <SelectItem value="it">IT</SelectItem>
-                <SelectItem value="hr">HR</SelectItem>
-                <SelectItem value="finance">Finance</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="terminated">Terminated</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Anomalies" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                <SelectItem value="with-anomalies">With Anomalies</SelectItem>
-                <SelectItem value="no-anomalies">No Anomalies</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Filter by Status
+            </label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="TERMINATED">Terminated</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Filter by Department
+            </label>
+            <select
+              value={filterDepartment}
+              onChange={(e) => setFilterDepartment(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="ALL">All Departments</option>
+              {departments.map(dept => (
+                <option key={dept} value={dept}>{dept}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
 
       {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>User Directory</CardTitle>
-          <CardDescription>Complete list of all users and their access information</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Employee ID</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Job Title</TableHead>
-                <TableHead>Manager</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Assets</TableHead>
-                <TableHead>Anomalies</TableHead>
-                <TableHead>Last Reviewed</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={`/avatars/${user.id}.png`} alt={user.name} />
-                        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{user.name}</div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Department
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Site
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Start Date
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <User className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {user.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {user.email}
+                        </div>
+                        {user.employeeId && (
+                          <div className="text-xs text-gray-400">
+                            ID: {user.employeeId}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">{user.employeeId}</TableCell>
-                  <TableCell>
-                    <Badge className={getDepartmentColor(user.department)}>
-                      {user.department}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{user.jobTitle}</TableCell>
-                  <TableCell>{user.manager}</TableCell>
-                  <TableCell>{getStatusBadge(user.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-1">
-                      <span className="font-medium">{user.assetsCount}</span>
-                      <span className="text-sm text-gray-500">assets</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {user.anomaliesCount > 0 ? (
-                      <div className="flex items-center space-x-1">
-                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                        <span className="font-medium text-red-600">{user.anomaliesCount}</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-1">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span className="text-green-600">None</span>
-                      </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{user.department}</div>
+                    {user.jobTitle && (
+                      <div className="text-sm text-gray-500">{user.jobTitle}</div>
                     )}
-                  </TableCell>
-                  <TableCell className="text-sm">{user.lastReviewed}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Edit
-                      </Button>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${StatusColors[user.status]}`}>
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <Building className="w-4 h-4 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-900">{user.site.name}</span>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {user.startDate ? new Date(user.startDate).toLocaleDateString() : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        onClick={() => handleEditUser(user)}
+                        className="text-blue-600 hover:text-blue-900"
+                        disabled={saving}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteUser(user.id)}
+                        className="text-red-600 hover:text-red-900"
+                        disabled={saving}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Department Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Building className="h-5 w-5" />
-              <span>Engineering</span>
-            </CardTitle>
-            <CardDescription>24 users</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm">Active Users</span>
-                <span className="font-medium">22</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Total Assets</span>
-                <span className="font-medium">67</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Anomalies</span>
-                <span className="font-medium text-red-600">3</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Health Score</span>
-                <Badge className="bg-green-100 text-green-800">95%</Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Building className="h-5 w-5" />
-              <span>Marketing</span>
-            </CardTitle>
-            <CardDescription>12 users</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm">Active Users</span>
-                <span className="font-medium">11</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Total Assets</span>
-                <span className="font-medium">28</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Anomalies</span>
-                <span className="font-medium text-yellow-600">5</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Health Score</span>
-                <Badge className="bg-yellow-100 text-yellow-800">78%</Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Building className="h-5 w-5" />
-              <span>Sales</span>
-            </CardTitle>
-            <CardDescription>18 users</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm">Active Users</span>
-                <span className="font-medium">16</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Total Assets</span>
-                <span className="font-medium">45</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Anomalies</span>
-                <span className="font-medium text-red-600">8</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Health Score</span>
-                <Badge className="bg-red-100 text-red-800">65%</Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </tbody>
+          </table>
+        </div>
+        
+        {filteredUsers.length === 0 && (
+          <div className="text-center py-12">
+            <User className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              {searchTerm || filterStatus !== 'ALL' || filterDepartment !== 'ALL'
+                ? 'Try adjusting your search or filters'
+                : 'Get started by adding your first user'}
+            </p>
+          </div>
+        )}
       </div>
+
+      {/* Create User Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Add New User</h3>
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newUser.name}
+                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter full name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter email address"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Employee ID
+                  </label>
+                  <input
+                    type="text"
+                    value={newUser.employeeId}
+                    onChange={(e) => setNewUser({ ...newUser, employeeId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter employee ID"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Department *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newUser.department}
+                    onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter department"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Job Title
+                  </label>
+                  <input
+                    type="text"
+                    value={newUser.jobTitle}
+                    onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter job title"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Manager
+                  </label>
+                  <input
+                    type="text"
+                    value={newUser.manager}
+                    onChange={(e) => setNewUser({ ...newUser, manager: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter manager name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Site
+                  </label>
+                  <select
+                    value={newUser.siteCode}
+                    onChange={(e) => setNewUser({ ...newUser, siteCode: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="HQ001">Corporate Headquarters</option>
+                    <option value="BR001">Branch Office</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={newUser.status}
+                    onChange={(e) => setNewUser({ ...newUser, status: e.target.value as 'ACTIVE' | 'INACTIVE' | 'TERMINATED' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                    <option value="TERMINATED">Terminated</option>
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={newUser.startDate}
+                    onChange={(e) => setNewUser({ ...newUser, startDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {saving ? 'Creating...' : 'Create User'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {showEditModal && editingUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Edit User</h3>
+            <form onSubmit={handleUpdateUser} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  User Name
+                </label>
+                <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-600">
+                  {editingUser.name} ({editingUser.email})
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Department
+                </label>
+                <input
+                  type="text"
+                  value={editingUser.department}
+                  onChange={(e) => setEditingUser({ ...editingUser, department: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Job Title
+                </label>
+                <input
+                  type="text"
+                  value={editingUser.jobTitle || ''}
+                  onChange={(e) => setEditingUser({ ...editingUser, jobTitle: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Manager
+                </label>
+                <input
+                  type="text"
+                  value={editingUser.manager || ''}
+                  onChange={(e) => setEditingUser({ ...editingUser, manager: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <select
+                  value={editingUser.status}
+                  onChange={(e) => setEditingUser({ ...editingUser, status: e.target.value as 'ACTIVE' | 'INACTIVE' | 'TERMINATED' })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                  <option value="TERMINATED">Terminated</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false)
+                    setEditingUser(null)
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {saving ? 'Updating...' : 'Update User'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
-  );
+  )
 } 

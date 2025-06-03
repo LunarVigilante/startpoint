@@ -29,18 +29,14 @@ interface Task {
   priority: string;
   status: string;
   createdBy: string;
-  assignedTo?: string;
   department?: string;
   userId?: string;
   assetId?: string;
+  serviceNowTicket?: string;
   dueDate?: string;
   createdAt: string;
   updatedAt: string;
   creator: {
-    name: string;
-    email: string;
-  };
-  assignee?: {
     name: string;
     email: string;
   };
@@ -61,12 +57,12 @@ const priorityColors = {
   URGENT: 'bg-red-100 text-red-800',
 };
 
-const statusColors = {
-  TODO: 'bg-gray-100 text-gray-800',
+  const statusColors = {
+  OPEN: 'bg-gray-100 text-gray-800',
   IN_PROGRESS: 'bg-purple-100 text-purple-800',
   WAITING: 'bg-yellow-100 text-yellow-800',
-  COMPLETED: 'bg-green-100 text-green-800',
-  CANCELLED: 'bg-red-100 text-red-800',
+  RESOLVED: 'bg-green-100 text-green-800',
+  CLOSED: 'bg-red-100 text-red-800',
 };
 
 const categoryLabels = {
@@ -113,8 +109,7 @@ export default function TasksPage() {
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          task.taskNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         task.creator.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (task.assignee && task.assignee.name.toLowerCase().includes(searchTerm.toLowerCase()));
+                         task.creator.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
     const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
     const matchesCategory = categoryFilter === 'all' || task.category === categoryFilter;
@@ -124,15 +119,15 @@ export default function TasksPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'TODO':
+      case 'OPEN':
         return <Square className="h-4 w-4" />;
       case 'IN_PROGRESS':
         return <Clock className="h-4 w-4" />;
       case 'WAITING':
         return <AlertCircle className="h-4 w-4" />;
-      case 'COMPLETED':
+      case 'RESOLVED':
         return <CheckCircle className="h-4 w-4" />;
-      case 'CANCELLED':
+      case 'CLOSED':
         return <CheckSquare className="h-4 w-4" />;
       default:
         return <Square className="h-4 w-4" />;
@@ -208,12 +203,12 @@ export default function TasksPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">To Do</CardTitle>
+            <CardTitle className="text-sm font-medium">Open</CardTitle>
             <Square className="h-4 w-4 text-gray-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-600">
-              {tasks.filter(t => t.status === 'TODO').length}
+              {tasks.filter(t => t.status === 'OPEN').length}
             </div>
           </CardContent>
         </Card>
@@ -230,12 +225,12 @@ export default function TasksPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CardTitle className="text-sm font-medium">Resolved</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {tasks.filter(t => t.status === 'COMPLETED').length}
+              {tasks.filter(t => t.status === 'RESOLVED').length}
             </div>
           </CardContent>
         </Card>
@@ -265,11 +260,11 @@ export default function TasksPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="TODO">To Do</SelectItem>
+                <SelectItem value="OPEN">Open</SelectItem>
                 <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
                 <SelectItem value="WAITING">Waiting</SelectItem>
-                <SelectItem value="COMPLETED">Completed</SelectItem>
-                <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                <SelectItem value="RESOLVED">Resolved</SelectItem>
+                <SelectItem value="CLOSED">Closed</SelectItem>
               </SelectContent>
             </Select>
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
@@ -351,12 +346,7 @@ export default function TasksPage() {
                         <User className="h-4 w-4" />
                         <span>Created by: {task.creator.name}</span>
                       </div>
-                      {task.assignee && (
-                        <div className="flex items-center space-x-1">
-                          <User className="h-4 w-4" />
-                          <span>Assigned to: {task.assignee.name}</span>
-                        </div>
-                      )}
+
                       <div className="flex items-center space-x-1">
                         <Calendar className="h-4 w-4" />
                         <span>{new Date(task.createdAt).toLocaleDateString()}</span>
@@ -374,6 +364,19 @@ export default function TasksPage() {
                       {task.user && (
                         <div>
                           <span className="font-medium">User:</span> {task.user.name}
+                        </div>
+                      )}
+                      {task.serviceNowTicket && (
+                        <div>
+                          <span className="font-medium">ServiceNow:</span> 
+                          <a 
+                            href={`https://your-instance.service-now.com/nav_to.do?uri=incident.do?sys_id=${task.serviceNowTicket}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 underline ml-1"
+                          >
+                            {task.serviceNowTicket}
+                          </a>
                         </div>
                       )}
                     </div>

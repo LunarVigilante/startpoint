@@ -35,6 +35,13 @@ enum AssetStatus {
   STOLEN
 }
 
+enum AssignmentType {
+  UNASSIGNED
+  USER
+  DEPARTMENT
+  EQUIPMENT
+}
+
 enum AnomalyType {
   MISSING_STANDARD_ITEM
   EXCESSIVE_ACCESS
@@ -133,18 +140,21 @@ model User {
 }
 
 model Asset {
-  id              String      @id @default(cuid())
-  assetTag        String      @unique
+  id              String         @id @default(cuid())
+  assetTag        String         @unique
   name            String
   type            AssetType
   category        String?
   manufacturer    String?
   model           String?
-  serialNumber    String?     @unique
+  serialNumber    String?        @unique
   siteId          String
   userId          String?
+  assignmentType  AssignmentType @default(UNASSIGNED)
+  assignedToDepartment String?
+  assignedToEquipment  String?
   assignedDate    DateTime?
-  status          AssetStatus @default(AVAILABLE)
+  status          AssetStatus    @default(AVAILABLE)
   condition       String?
   location        String?
   purchaseDate    DateTime?
@@ -152,10 +162,10 @@ model Asset {
   vendor          String?
   invoiceNumber   String?
   warrantyExpiry  DateTime?
-  history         Json?       // JSON field for tracking assignment history
-  maintenanceLog  Json?       // JSON field for maintenance records
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  history         Json?          // JSON field for tracking assignment history
+  maintenanceLog  Json?          // JSON field for maintenance records
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   // Relations
   site Site  @relation(fields: [siteId], references: [id], onDelete: Cascade)

@@ -1,103 +1,23 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import prisma, { withRetry } from '@/lib/prisma';
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const department = searchParams.get('department');
-    const status = searchParams.get('status');
-    const anomalies = searchParams.get('anomalies');
-    const search = searchParams.get('search');
-
-    // Build where clause based on filters
-    const where: any = {};
-    
-    if (department && department !== 'all') {
-      where.department = {
-        equals: department,
-        mode: 'insensitive',
-      };
-    }
-    
-    if (status && status !== 'all') {
-      where.status = status.toUpperCase();
-    }
-    
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { employeeId: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    const users = await prisma.user.findMany({
-      where,
+    const users = await withRetry(() => prisma.user.findMany({
       include: {
-        assets: {
-          select: {
-            id: true,
-            assetTag: true,
-            name: true,
-            type: true,
-            status: true,
-          },
-        },
-        licenses: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-          },
-        },
-        groups: {
-          select: {
-            id: true,
-            groupName: true,
-            system: true,
-            critical: true,
-          },
-        },
-        distributionLists: {
-          select: {
-            id: true,
-            listName: true,
-            listEmail: true,
-          },
-        },
-        anomalies: {
-          where: {
-            status: 'OPEN',
-          },
-          select: {
-            id: true,
-            type: true,
-            severity: true,
-            description: true,
-          },
-        },
         site: {
           select: {
             name: true,
+            code: true,
           },
         },
       },
       orderBy: {
-        name: 'asc',
+        createdAt: 'desc',
       },
-    });
+    }));
 
-    // Filter by anomalies if requested
-    let filteredUsers = users;
-    if (anomalies && anomalies !== 'all') {
-      if (anomalies === 'with-anomalies') {
-        filteredUsers = users.filter((user: any) => user.anomalies.length > 0);
-      } else if (anomalies === 'no-anomalies') {
-        filteredUsers = users.filter((user: any) => user.anomalies.length === 0);
-      }
-    }
-
-    return NextResponse.json(filteredUsers);
+    return NextResponse.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json(
@@ -107,29 +27,234 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const {
+      email,
+      employeeId,
+      name,
+      siteCode,
+      department,
+      jobTitle,
+      manager,
+      status = 'ACTIVE',
+      startDate,
+    } = body;
+
+    // Validate required fields
+    if (!email || !name || !siteCode || !department) {
+      return NextResponse.json(
+        { error: 'Email, name, site, and department are required' },
+        { status: 400 }
+      );
+    }
+
+    // Look up site ID from site code
+    const site = await withRetry(() => prisma.site.findUnique({
+      where: { code: siteCode },
+    }));
     
-    const user = await prisma.user.create({
+    if (!site) {
+      return NextResponse.json(
+        { error: 'Site not found' },
+        { status: 400 }
+      );
+    }
+
+    // Check if email already exists
+    const existingUser = await withRetry(() => prisma.user.findUnique({
+      where: { email },
+    }));
+    
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'User with this email already exists' },
+        { status: 400 }
+      );
+    }
+
+    // Check if employee ID already exists (if provided)
+    if (employeeId) {
+      const existingEmployeeId = await withRetry(() => prisma.user.findUnique({
+        where: { employeeId },
+      }));
+      
+      if (existingEmployeeId) {
+        return NextResponse.json(
+          { error: 'User with this employee ID already exists' },
+          { status: 400 }
+        );
+      }
+    }
+
+    const user = await withRetry(() => prisma.user.create({
       data: {
-        ...body,
-        siteId: body.siteId, // You'll need to pass the site ID
+        email: email.toLowerCase().trim(),
+        employeeId: employeeId || null,
+        name: name.trim(),
+        siteId: site.id,
+        department: department.trim(),
+        jobTitle: jobTitle || null,
+        manager: manager || null,
+        status,
+        startDate: startDate ? new Date(startDate) : null,
       },
       include: {
-        assets: true,
-        licenses: true,
-        groups: true,
-        distributionLists: true,
-        anomalies: true,
+        site: {
+          select: {
+            name: true,
+            code: true,
+          },
+        },
       },
-    });
+    }));
 
     return NextResponse.json(user, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating user:', error);
+    
+    // Handle specific Prisma errors
+    if (error.code === 'P2002') {
+      const target = error.meta?.target;
+      if (target?.includes('email')) {
+        return NextResponse.json(
+          { error: 'User with this email already exists' },
+          { status: 400 }
+        );
+      }
+      if (target?.includes('employeeId')) {
+        return NextResponse.json(
+          { error: 'User with this employee ID already exists' },
+          { status: 400 }
+        );
+      }
+      return NextResponse.json(
+        { error: 'User with these details already exists' },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to create user' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, department, jobTitle, manager, status } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if user exists
+    const existingUser = await withRetry(() => prisma.user.findUnique({
+      where: { id },
+    }));
+    
+    if (!existingUser) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+    if (department !== undefined) updateData.department = department.trim();
+    if (jobTitle !== undefined) updateData.jobTitle = jobTitle || null;
+    if (manager !== undefined) updateData.manager = manager || null;
+    if (status !== undefined) updateData.status = status;
+
+    // Update lastReviewed when status changes
+    if (status !== undefined && status !== existingUser.status) {
+      updateData.lastReviewed = new Date();
+    }
+
+    const user = await withRetry(() => prisma.user.update({
+      where: { id },
+      data: updateData,
+      include: {
+        site: {
+          select: {
+            name: true,
+            code: true,
+          },
+        },
+      },
+    }));
+
+    return NextResponse.json(user);
+  } catch (error: any) {
+    console.error('Error updating user:', error);
+    
+    if (error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: 'Failed to update user' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if user has associated assets, tasks, or other data
+    const [assetCount, createdTaskCount, relatedTaskCount] = await Promise.all([
+      withRetry(() => prisma.asset.count({ where: { userId: id } })),
+      withRetry(() => prisma.task.count({ where: { createdBy: id } })),
+      withRetry(() => prisma.task.count({ where: { userId: id } })),
+    ]);
+
+    if (assetCount > 0 || createdTaskCount > 0 || relatedTaskCount > 0) {
+      return NextResponse.json(
+        { 
+          error: `Cannot delete user. They have ${assetCount} assets, ${createdTaskCount} created tasks, and ${relatedTaskCount} related tasks.`,
+          details: { assetCount, createdTaskCount, relatedTaskCount }
+        },
+        { status: 400 }
+      );
+    }
+
+    await withRetry(() => prisma.user.delete({
+      where: { id },
+    }));
+
+    return NextResponse.json({ message: 'User deleted successfully' });
+  } catch (error: any) {
+    console.error('Error deleting user:', error);
+    
+    if (error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: 'Failed to delete user' },
       { status: 500 }
     );
   }

@@ -11,12 +11,6 @@ export async function GET() {
             email: true,
           },
         },
-        assignee: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
         user: {
           select: {
             name: true,
@@ -54,12 +48,12 @@ export async function POST(request: NextRequest) {
       category,
       priority = 'MEDIUM',
       createdBy, // This will be an email
-      assignedTo, // This will be an email if provided
       siteId, // This will be a site code
       department,
       userId, // This will be an email if provided
       assetId,
       dueDate,
+      serviceNowTicket,
     } = body;
 
     // Look up the actual IDs from the provided identifiers
@@ -85,17 +79,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Look up assignee if provided
-    let assigneeUserId = null;
-    if (assignedTo) {
-      const assigneeUser = await withRetry(() => prisma.user.findUnique({
-        where: { email: assignedTo },
-      }));
-      if (assigneeUser) {
-        assigneeUserId = assigneeUser.id;
-      }
-    }
-
     // Look up related user if provided
     let relatedUserId = null;
     if (userId) {
@@ -119,21 +102,15 @@ export async function POST(request: NextRequest) {
         category,
         priority,
         createdBy: creatorUser.id,
-        assignedTo: assigneeUserId,
         siteId: site.id,
         department,
         userId: relatedUserId,
         assetId,
         dueDate: dueDate ? new Date(dueDate) : null,
+
       },
       include: {
         creator: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-        assignee: {
           select: {
             name: true,
             email: true,
