@@ -1,49 +1,33 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-
-async function executeWithRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fn();
-    } catch (error: any) {
-      if (error?.code === 'P2010' && error?.meta?.code === '42P05' && i < retries - 1) {
-        // Prepared statement already exists error - wait and retry
-        await new Promise(resolve => setTimeout(resolve, 100 * (i + 1)));
-        continue;
-      }
-      throw error;
-    }
-  }
-  throw new Error('Max retries exceeded');
-}
+import prisma, { withRetry } from '@/lib/prisma';
 
 export async function GET() {
   try {
     // Get total assets count
-    const totalAssets = await executeWithRetry(() => prisma.asset.count());
+    const totalAssets = await withRetry(() => prisma.asset.count());
     
     // Get active users count
-    const activeUsers = await executeWithRetry(() => prisma.user.count({
+    const activeUsers = await withRetry(() => prisma.user.count({
       where: {
         status: 'ACTIVE',
       },
     }));
     
     // Get open anomalies count
-    const openAnomalies = await executeWithRetry(() => prisma.accessAnomaly.count({
+    const openAnomalies = await withRetry(() => prisma.accessAnomaly.count({
       where: {
         status: 'OPEN',
       },
     }));
     
     // Get asset status breakdown
-    const assetsByStatus = await executeWithRetry(() => prisma.asset.groupBy({
+    const assetsByStatus = await withRetry(() => prisma.asset.groupBy({
       by: ['status'],
       _count: true,
     }));
     
     // Get users by department
-    const usersByDepartment = await executeWithRetry(() => prisma.user.groupBy({
+    const usersByDepartment = await withRetry(() => prisma.user.groupBy({
       by: ['department'],
       where: {
         status: 'ACTIVE',
@@ -52,7 +36,7 @@ export async function GET() {
     }));
     
     // Get recent assets (last 10)
-    const recentAssets = await executeWithRetry(() => prisma.asset.findMany({
+    const recentAssets = await withRetry(() => prisma.asset.findMany({
       take: 10,
       orderBy: {
         updatedAt: 'desc',
@@ -68,7 +52,7 @@ export async function GET() {
     }));
     
     // Get recent anomalies (last 5)
-    const recentAnomalies = await executeWithRetry(() => prisma.accessAnomaly.findMany({
+    const recentAnomalies = await withRetry(() => prisma.accessAnomaly.findMany({
       take: 5,
       where: {
         status: 'OPEN',
@@ -90,7 +74,7 @@ export async function GET() {
     const departmentStats = await Promise.all(
       usersByDepartment.map(async (dept: any) => {
         const totalDeptUsers = dept._count;
-        const deptAnomalies = await executeWithRetry(() => prisma.accessAnomaly.count({
+        const deptAnomalies = await withRetry(() => prisma.accessAnomaly.count({
           where: {
             status: 'OPEN',
             user: {
@@ -99,7 +83,7 @@ export async function GET() {
           },
         }));
         
-        const deptAssets = await executeWithRetry(() => prisma.asset.count({
+        const deptAssets = await withRetry(() => prisma.asset.count({
           where: {
             user: {
               department: dept.department,
@@ -126,7 +110,7 @@ export async function GET() {
         activeUsers,
         openAnomalies,
         avgDepartmentHealth: Math.round(
-          departmentStats.reduce((sum, dept) => sum + dept.healthScore, 0) / 
+          departmentStats.reduce((sum: number, dept) => sum + dept.healthScore, 0) / 
           departmentStats.length
         ),
       },
