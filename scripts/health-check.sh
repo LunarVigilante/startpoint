@@ -3,8 +3,8 @@
 # StartPoint Health Monitoring Script
 # Usage: ./scripts/health-check.sh
 
-# Configuration
-PRODUCTION_URL="https://startpoint-psj2di05j-epoche.vercel.app"
+# Configuration  
+PRODUCTION_URL="https://startpoint-aezovis7y-epoche.vercel.app"
 HEALTH_ENDPOINT="$PRODUCTION_URL/api/health"
 LOG_FILE="./logs/health-check.log"
 

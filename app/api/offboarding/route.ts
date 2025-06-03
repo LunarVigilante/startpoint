@@ -63,52 +63,63 @@ export async function GET(request: NextRequest) {
 
     // Transform data to include offboarding-specific info
     const transformedCases = await Promise.all(offboardingCases.map(async (case_) => {
-      if (!case_.user) return case_;
+      let userAssets: any[] = [];
+      let userAccess: any[] = [];
+      let totalTasks = 5; // Base tasks
+      let completedAssets = 0;
+      let progress = 0;
 
-      // Get user's assets that need to be returned
-      const userAssets = await withRetry(() => prisma.asset.findMany({
-        where: {
-          userId: case_.user!.id,
-          status: { not: 'RETIRED' }
-        },
-        select: {
-          id: true,
-          name: true,
-          assetTag: true,
-          status: true,
+      if (case_.user) {
+        try {
+          // Get user's assets that need to be returned
+          userAssets = await withRetry(() => prisma.asset.findMany({
+            where: {
+              userId: case_.user!.id,
+              status: { not: 'RETIRED' }
+            },
+            select: {
+              id: true,
+              name: true,
+              assetTag: true,
+              status: true,
+            }
+          }));
+
+          // Get user's access that needs to be removed
+          userAccess = await withRetry(() => prisma.userGroup.findMany({
+            where: {
+              userId: case_.user!.id,
+            },
+            select: {
+              id: true,
+              groupName: true,
+              groupType: true,
+              system: true,
+              critical: true,
+            }
+          }));
+
+          // Calculate progress based on completed vs total tasks
+          totalTasks = userAssets.length + userAccess.length + 5; // +5 for standard offboarding tasks
+          completedAssets = userAssets.filter(a => a.status === 'AVAILABLE').length;
+          progress = totalTasks > 0 ? Math.round(((completedAssets + case_.comments.length) / totalTasks) * 100) : 0;
+        } catch (error) {
+          console.error('Error fetching user assets/access:', error);
+          // Continue with empty arrays if there's an error
         }
-      }));
-
-      // Get user's access that needs to be removed
-      const userAccess = await withRetry(() => prisma.userGroup.findMany({
-        where: {
-          userId: case_.user!.id,
-        },
-        select: {
-          id: true,
-          groupName: true,
-          groupType: true,
-          system: true,
-          critical: true,
-        }
-      }));
-
-      // Calculate progress based on completed vs total tasks
-      const totalTasks = userAssets.length + userAccess.length + 5; // +5 for standard offboarding tasks
-      const completedAssets = userAssets.filter(a => a.status === 'AVAILABLE').length;
-      const progress = Math.round(((completedAssets + case_.comments.length) / totalTasks) * 100);
+      }
 
       return {
         ...case_,
-        assets: userAssets,
+        assets: userAssets || [],
         accessItems: userAccess.map(access => ({
           id: access.id,
           system: access.system || access.groupType || 'System',
           access: access.groupName,
           status: 'PENDING', // This would be determined by actual removal status
-        })),
+        })) || [],
         progress,
-        completedTasks: completedAssets + case_.comments.length,
+        completedTasks: completedAssets + (case_.comments?.length || 0),
         totalTasks,
       };
     }));

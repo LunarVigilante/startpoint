@@ -7,36 +7,69 @@ export async function GET(request: NextRequest) {
     const siteId = searchParams.get('siteId');
 
     // Get departments with their users, assets, and baselines
-    const departments = await withRetry(() => {
-      return prisma.$queryRaw`
-        SELECT 
-          d.department,
-          d.site_id as "siteId",
-          COUNT(DISTINCT u.id) as "userCount",
-          COUNT(DISTINCT CASE WHEN u.status = 'ACTIVE' THEN u.id END) as "activeUsers",
-          COUNT(DISTINCT a.id) as "totalAssets",
-          COUNT(DISTINCT t.id) as "totalTasks",
-          COUNT(DISTINCT CASE WHEN t.status = 'TODO' THEN t.id END) as "todoTasks",
-          COUNT(DISTINCT aa.id) as "anomalies",
-          MAX(u.last_reviewed) as "lastReviewed",
-          db.standard_assets as "standardAssets",
-          db.required_groups as "requiredGroups",
-          db.required_lists as "requiredLists",
-          db.common_licenses as "commonLicenses"
-        FROM (
-          SELECT DISTINCT department, site_id 
-          FROM users 
-          ${siteId ? 'WHERE site_id = $1' : ''}
-        ) d
-        LEFT JOIN users u ON u.department = d.department AND u.site_id = d.site_id
-        LEFT JOIN assets a ON a.user_id = u.id
-        LEFT JOIN tasks t ON t.user_id = u.id
-        LEFT JOIN access_anomalies aa ON aa.user_id = u.id AND aa.status = 'OPEN'
-        LEFT JOIN department_baselines db ON db.department = d.department AND db.site_id = d.site_id
-        GROUP BY d.department, d.site_id, db.standard_assets, db.required_groups, db.required_lists, db.common_licenses
-        ORDER BY d.department
-      `;
-    }) as any[];
+    let departments;
+    if (siteId) {
+      departments = await withRetry(() => {
+        return prisma.$queryRaw`
+          SELECT 
+            d.department,
+            d."siteId",
+            COUNT(DISTINCT u.id) as "userCount",
+            COUNT(DISTINCT CASE WHEN u.status = 'ACTIVE' THEN u.id END) as "activeUsers",
+            COUNT(DISTINCT a.id) as "totalAssets",
+            COUNT(DISTINCT t.id) as "totalTasks",
+            COUNT(DISTINCT CASE WHEN t.status = 'TODO' THEN t.id END) as "todoTasks",
+            COUNT(DISTINCT aa.id) as "anomalies",
+            MAX(u."lastReviewed") as "lastReviewed",
+            db."standardAssets",
+            db."requiredGroups",
+            db."requiredLists", 
+            db."commonLicenses"
+          FROM (
+            SELECT DISTINCT department, "siteId" 
+            FROM users 
+            WHERE "siteId" = ${siteId}
+          ) d
+          LEFT JOIN users u ON u.department = d.department AND u."siteId" = d."siteId"
+          LEFT JOIN assets a ON a."userId" = u.id
+          LEFT JOIN tasks t ON t."userId" = u.id
+          LEFT JOIN access_anomalies aa ON aa."userId" = u.id AND aa.status = 'OPEN'
+          LEFT JOIN department_baselines db ON db.department = d.department AND db."siteId" = d."siteId"
+          GROUP BY d.department, d."siteId", db."standardAssets", db."requiredGroups", db."requiredLists", db."commonLicenses"
+          ORDER BY d.department
+        `;
+      }) as any[];
+    } else {
+      departments = await withRetry(() => {
+        return prisma.$queryRaw`
+          SELECT 
+            d.department,
+            d."siteId",
+            COUNT(DISTINCT u.id) as "userCount",
+            COUNT(DISTINCT CASE WHEN u.status = 'ACTIVE' THEN u.id END) as "activeUsers",
+            COUNT(DISTINCT a.id) as "totalAssets",
+            COUNT(DISTINCT t.id) as "totalTasks",
+            COUNT(DISTINCT CASE WHEN t.status = 'TODO' THEN t.id END) as "todoTasks",
+            COUNT(DISTINCT aa.id) as "anomalies",
+            MAX(u."lastReviewed") as "lastReviewed",
+            db."standardAssets",
+            db."requiredGroups",
+            db."requiredLists",
+            db."commonLicenses"
+          FROM (
+            SELECT DISTINCT department, "siteId" 
+            FROM users 
+          ) d
+          LEFT JOIN users u ON u.department = d.department AND u."siteId" = d."siteId"
+          LEFT JOIN assets a ON a."userId" = u.id
+          LEFT JOIN tasks t ON t."userId" = u.id
+          LEFT JOIN access_anomalies aa ON aa."userId" = u.id AND aa.status = 'OPEN'
+          LEFT JOIN department_baselines db ON db.department = d.department AND db."siteId" = d."siteId"
+          GROUP BY d.department, d."siteId", db."standardAssets", db."requiredGroups", db."requiredLists", db."commonLicenses"
+          ORDER BY d.department
+        `;
+      }) as any[];
+    }
 
     // Calculate health scores
     const departmentsWithHealth = departments.map((dept: any) => {

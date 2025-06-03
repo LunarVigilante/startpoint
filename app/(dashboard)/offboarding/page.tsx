@@ -80,6 +80,9 @@ export default function OffboardingPage() {
   const [showNewOffboarding, setShowNewOffboarding] = useState(false)
   const [users, setUsers] = useState<any[]>([])
   const [saving, setSaving] = useState(false)
+  const [selectedOffboarding, setSelectedOffboarding] = useState<string | null>(null)
+  const [checklist, setChecklist] = useState<any>(null)
+  const [checklistLoading, setChecklistLoading] = useState(false)
   const [newOffboarding, setNewOffboarding] = useState({
     userId: '',
     lastWorkingDay: '',
@@ -159,6 +162,53 @@ export default function OffboardingPage() {
       setError(err.message)
     }
   }
+
+  const fetchChecklist = async (offboardingId: string) => {
+    try {
+      setChecklistLoading(true)
+      const response = await fetch(`/api/offboarding/checklist?offboardingId=${offboardingId}`)
+      if (!response.ok) throw new Error('Failed to fetch checklist')
+      const data = await response.json()
+      setChecklist(data)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setChecklistLoading(false)
+    }
+  }
+
+  const handleChecklistItemToggle = async (itemId: string, completed: boolean, notes?: string) => {
+    if (!selectedOffboarding) return
+    
+    try {
+      const response = await fetch('/api/offboarding/checklist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          offboardingId: selectedOffboarding,
+          itemId,
+          completed,
+          notes: notes || '',
+          userId: 'current-user-id', // In real app, get from auth context
+        }),
+      })
+      
+      if (!response.ok) throw new Error('Failed to update checklist item')
+      
+      // Refresh checklist
+      fetchChecklist(selectedOffboarding)
+      fetchOffboardingCases() // Refresh main data
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
+  // Effect to fetch checklist when selected
+  useEffect(() => {
+    if (selectedOffboarding) {
+      fetchChecklist(selectedOffboarding)
+    }
+  }, [selectedOffboarding])
 
   const calculateStats = () => {
     const activeCases = offboardingCases.filter(c => c.status !== 'COMPLETED').length
@@ -389,7 +439,11 @@ export default function OffboardingPage() {
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Update Progress
                   </Button>
-                  <Button variant="outline" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => setSelectedOffboarding(case_.id)}
+                  >
                     <FileText className="h-4 w-4 mr-2" />
                     View Full Checklist
                   </Button>
@@ -522,6 +576,117 @@ export default function OffboardingPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Checklist Modal */}
+      {selectedOffboarding && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b dark:border-gray-700">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Offboarding Checklist
+                </h3>
+                {checklist?.user && (
+                  <p className="text-gray-600 dark:text-gray-400 mt-1">
+                    {checklist.user.name} - {checklist.user.department}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => setSelectedOffboarding(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {checklistLoading ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-gray-600 dark:text-gray-400">Loading checklist...</p>
+              </div>
+            ) : checklist ? (
+              <div className="p-6 overflow-y-auto max-h-[60vh]">
+                {/* Progress Overview */}
+                <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Progress: {checklist.stats.completed}/{checklist.stats.total} completed
+                    </span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {checklist.stats.progress}%
+                    </span>
+                  </div>
+                  <Progress value={checklist.stats.progress} className="mb-2" />
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    Required items: {checklist.stats.requiredCompleted}/{checklist.stats.requiredTotal}
+                  </div>
+                </div>
+
+                {/* Checklist Items */}
+                <div className="space-y-4">
+                  {checklist.checklist.map((item: any) => (
+                    <div 
+                      key={item.id} 
+                      className={`p-4 border rounded-lg transition-colors ${
+                        item.completed 
+                          ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700' 
+                          : 'bg-white border-gray-200 dark:bg-gray-700 dark:border-gray-600'
+                      }`}
+                    >
+                      <div className="flex items-start space-x-3">
+                                                 <Checkbox 
+                           checked={item.completed}
+                           onCheckedChange={(checked) => handleChecklistItemToggle(item.id, !!checked)}
+                           className="mt-1"
+                         />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className={`font-medium ${
+                              item.completed 
+                                ? 'text-green-800 dark:text-green-300' 
+                                : 'text-gray-900 dark:text-white'
+                            }`}>
+                              {item.title}
+                              {item.required && (
+                                <span className="ml-2 text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 px-2 py-1 rounded">
+                                  Required
+                                </span>
+                              )}
+                            </h4>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              ~{item.estimatedMinutes} min
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            {item.description}
+                          </p>
+                          {item.completed && item.completedAt && (
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                              Completed: {new Date(item.completedAt).toLocaleDateString()}
+                            </p>
+                          )}
+                          {item.notes && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
+                              Notes: {item.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            
+            <div className="border-t dark:border-gray-700 p-4 flex justify-end">
+              <Button onClick={() => setSelectedOffboarding(null)}>
+                Close
+              </Button>
+            </div>
           </div>
         </div>
       )}
