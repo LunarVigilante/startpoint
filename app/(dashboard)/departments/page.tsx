@@ -1,3 +1,6 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,86 +15,28 @@ import {
   TrendingDown,
   Settings,
   FileText,
+  Plus,
+  Edit,
+  Save,
+  X,
 } from "lucide-react";
 
-// Mock data for demonstration
-const departments = [
-  {
-    id: "1",
-    name: "Engineering",
-    userCount: 24,
-    activeUsers: 22,
-    totalAssets: 67,
-    standardAssets: 64,
-    anomalies: 3,
-    healthScore: 95,
-    trend: "up",
-    lastReviewed: "2024-01-15",
-    requiredAssets: ["Laptop", "Monitor", "Keyboard", "Mouse"],
-    requiredGroups: ["Engineering-All", "VPN-Access", "Git-Access"],
-    commonLicenses: ["Visual Studio", "JetBrains", "Adobe Creative"],
-  },
-  {
-    id: "2",
-    name: "Marketing",
-    userCount: 12,
-    activeUsers: 11,
-    totalAssets: 28,
-    standardAssets: 22,
-    anomalies: 5,
-    healthScore: 78,
-    trend: "down",
-    lastReviewed: "2024-01-10",
-    requiredAssets: ["Laptop", "Monitor", "Phone"],
-    requiredGroups: ["Marketing-All", "Social-Media", "Analytics"],
-    commonLicenses: ["Adobe Creative", "Canva Pro", "HubSpot"],
-  },
-  {
-    id: "3",
-    name: "Sales",
-    userCount: 18,
-    activeUsers: 16,
-    totalAssets: 45,
-    standardAssets: 29,
-    anomalies: 8,
-    healthScore: 65,
-    trend: "down",
-    lastReviewed: "2023-12-20",
-    requiredAssets: ["Laptop", "Phone", "Tablet"],
-    requiredGroups: ["Sales-All", "CRM-Access", "VPN-Access"],
-    commonLicenses: ["Salesforce", "Microsoft Office", "Zoom"],
-  },
-  {
-    id: "4",
-    name: "IT",
-    userCount: 8,
-    activeUsers: 8,
-    totalAssets: 32,
-    standardAssets: 31,
-    anomalies: 1,
-    healthScore: 97,
-    trend: "up",
-    lastReviewed: "2024-01-12",
-    requiredAssets: ["Laptop", "Monitor", "Phone", "Testing Equipment"],
-    requiredGroups: ["IT-All", "Admin-Access", "Server-Access"],
-    commonLicenses: ["VMware", "Microsoft Admin", "Monitoring Tools"],
-  },
-  {
-    id: "5",
-    name: "HR",
-    userCount: 6,
-    activeUsers: 5,
-    totalAssets: 15,
-    standardAssets: 13,
-    anomalies: 2,
-    healthScore: 87,
-    trend: "up",
-    lastReviewed: "2024-01-08",
-    requiredAssets: ["Laptop", "Monitor", "Phone"],
-    requiredGroups: ["HR-All", "Payroll-Access", "Benefits-Access"],
-    commonLicenses: ["ADP", "BambooHR", "Microsoft Office"],
-  },
-];
+type Department = {
+  department: string;
+  siteId: string;
+  userCount: number;
+  activeUsers: number;
+  totalAssets: number;
+  totalTasks: number;
+  todoTasks: number;
+  anomalies: number;
+  healthScore: number;
+  lastReviewed: string | null;
+  standardAssets: any[];
+  requiredGroups: any[];
+  requiredLists: any[];
+  commonLicenses: any[];
+};
 
 function getHealthScoreColor(score: number) {
   if (score >= 90) return "text-green-600";
@@ -114,6 +59,98 @@ function getTrendIcon(trend: string) {
 }
 
 export default function DepartmentsPage() {
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [editingBaseline, setEditingBaseline] = useState<Department | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetchDepartments()
+  }, [])
+
+  const fetchDepartments = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/departments')
+      if (!response.ok) throw new Error('Failed to fetch departments')
+      const data = await response.json()
+      setDepartments(data)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSaveBaseline = async (dept: Department) => {
+    try {
+      setSaving(true)
+      const response = await fetch('/api/departments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          department: dept.department,
+          siteId: dept.siteId,
+          standardAssets: dept.standardAssets,
+          requiredGroups: dept.requiredGroups,
+          requiredLists: dept.requiredLists,
+          commonLicenses: dept.commonLicenses,
+        }),
+      })
+      
+      if (!response.ok) throw new Error('Failed to save baseline')
+      
+      setEditingBaseline(null)
+      fetchDepartments() // Refresh data
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const calculateOverallStats = () => {
+    if (departments.length === 0) return { avgHealth: 0, totalUsers: 0, totalAssets: 0, totalAnomalies: 0 }
+    
+    const avgHealth = Math.round(departments.reduce((sum, dept) => sum + dept.healthScore, 0) / departments.length)
+    const totalUsers = departments.reduce((sum, dept) => sum + dept.userCount, 0)
+    const totalAssets = departments.reduce((sum, dept) => sum + dept.totalAssets, 0)
+    const totalAnomalies = departments.reduce((sum, dept) => sum + dept.anomalies, 0)
+    
+    return { avgHealth, totalUsers, totalAssets, totalAnomalies }
+  }
+
+  const stats = calculateOverallStats()
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h3 className="text-red-800 font-medium">Error Loading Departments</h3>
+          <p className="text-red-600 mt-1">{error}</p>
+          <button
+            onClick={fetchDepartments}
+            className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -127,9 +164,9 @@ export default function DepartmentsPage() {
             <FileText className="h-4 w-4 mr-2" />
             Export Report
           </Button>
-          <Button>
+          <Button onClick={fetchDepartments}>
             <Settings className="h-4 w-4 mr-2" />
-            Manage Baselines
+            Refresh Data
           </Button>
         </div>
       </div>
@@ -142,9 +179,9 @@ export default function DepartmentsPage() {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">84%</div>
+            <div className="text-2xl font-bold">{stats.avgHealth}%</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">+2%</span> from last month
+              Across {departments.length} departments
             </p>
           </CardContent>
         </Card>
@@ -155,22 +192,22 @@ export default function DepartmentsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">68</div>
+            <div className="text-2xl font-bold">{stats.totalUsers}</div>
             <p className="text-xs text-muted-foreground">
-              Across 5 departments
+              Across all departments
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Standard Assets</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Assets</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">159/187</div>
+            <div className="text-2xl font-bold">{stats.totalAssets}</div>
             <p className="text-xs text-muted-foreground">
-              85% compliance rate
+              Managed assets
             </p>
           </CardContent>
         </Card>
@@ -181,7 +218,7 @@ export default function DepartmentsPage() {
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">19</div>
+            <div className="text-2xl font-bold">{stats.totalAnomalies}</div>
             <p className="text-xs text-muted-foreground">
               Requiring attention
             </p>
@@ -192,22 +229,28 @@ export default function DepartmentsPage() {
       {/* Department Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {departments.map((dept) => (
-          <Card key={dept.id} className={`${getHealthScoreBg(dept.healthScore)} border-2`}>
+          <Card key={`${dept.department}-${dept.siteId}`} className={`${getHealthScoreBg(dept.healthScore)} border-2`}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center space-x-2">
                   <Building2 className="h-5 w-5" />
-                  <span>{dept.name}</span>
+                  <span>{dept.department}</span>
                 </CardTitle>
                 <div className="flex items-center space-x-2">
-                  {getTrendIcon(dept.trend)}
                   <span className={`text-2xl font-bold ${getHealthScoreColor(dept.healthScore)}`}>
                     {dept.healthScore}%
                   </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditingBaseline(dept)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
               <CardDescription>
-                {dept.userCount} users • Last reviewed {dept.lastReviewed}
+                {dept.userCount} users • {dept.totalAssets} assets • {dept.anomalies} anomalies
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -215,22 +258,22 @@ export default function DepartmentsPage() {
               <div className="space-y-3">
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span>Asset Compliance</span>
-                    <span>{Math.round((dept.standardAssets / dept.totalAssets) * 100)}%</span>
+                    <span>User Activity</span>
+                    <span>{dept.userCount > 0 ? Math.round((dept.activeUsers / dept.userCount) * 100) : 0}%</span>
                   </div>
                   <Progress 
-                    value={(dept.standardAssets / dept.totalAssets) * 100} 
+                    value={dept.userCount > 0 ? (dept.activeUsers / dept.userCount) * 100 : 0} 
                     className="h-2"
                   />
                 </div>
                 
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span>Active Users</span>
-                    <span>{Math.round((dept.activeUsers / dept.userCount) * 100)}%</span>
+                    <span>Task Completion</span>
+                    <span>{dept.totalTasks > 0 ? Math.round(((dept.totalTasks - dept.todoTasks) / dept.totalTasks) * 100) : 0}%</span>
                   </div>
                   <Progress 
-                    value={(dept.activeUsers / dept.userCount) * 100} 
+                    value={dept.totalTasks > 0 ? ((dept.totalTasks - dept.todoTasks) / dept.totalTasks) * 100 : 0} 
                     className="h-2"
                   />
                 </div>
@@ -240,7 +283,7 @@ export default function DepartmentsPage() {
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-lg font-semibold">{dept.userCount}</div>
-                  <div className="text-xs text-gray-600">Total Users</div>
+                  <div className="text-xs text-gray-600">Users</div>
                 </div>
                 <div>
                   <div className="text-lg font-semibold">{dept.totalAssets}</div>
@@ -254,43 +297,39 @@ export default function DepartmentsPage() {
                 </div>
               </div>
 
-              {/* Quick Info */}
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="font-medium">Required Assets:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {dept.requiredAssets.map((asset, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {asset}
-                      </Badge>
-                    ))}
+              {/* Baseline Info */}
+              {dept.standardAssets && dept.standardAssets.length > 0 && (
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="font-medium">Standard Assets:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {dept.standardAssets.slice(0, 3).map((asset: any, index: number) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {typeof asset === 'string' ? asset : asset.name}
+                        </Badge>
+                      ))}
+                      {dept.standardAssets.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{dept.standardAssets.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
-                
-                <div>
-                  <span className="font-medium">Key Groups:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {dept.requiredGroups.slice(0, 2).map((group, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {group}
-                      </Badge>
-                    ))}
-                    {dept.requiredGroups.length > 2 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{dept.requiredGroups.length - 2} more
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Actions */}
               <div className="flex space-x-2 pt-2">
                 <Button variant="outline" size="sm" className="flex-1">
                   View Details
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1">
-                  Fix Issues
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => setEditingBaseline(dept)}
+                >
+                  Manage Baseline
                 </Button>
               </div>
             </CardContent>
@@ -298,58 +337,91 @@ export default function DepartmentsPage() {
         ))}
       </div>
 
-      {/* Anomaly Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Department Anomaly Summary</CardTitle>
-          <CardDescription>Issues requiring attention across departments</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
-              <div className="flex items-center space-x-3">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-                <div>
-                  <p className="font-medium text-sm">Missing Standard Equipment</p>
-                  <p className="text-xs text-gray-600">8 users across Sales and Marketing missing required laptops</p>
-                </div>
+      {/* Baseline Editor Modal */}
+      {editingBaseline && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Manage Baseline: {editingBaseline.department}
+              </h3>
+              <button
+                onClick={() => setEditingBaseline(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Standard Assets (comma-separated)
+                </label>
+                <textarea
+                  value={editingBaseline.standardAssets?.join(', ') || ''}
+                  onChange={(e) => setEditingBaseline({
+                    ...editingBaseline,
+                    standardAssets: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                  })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Laptop, Monitor, Keyboard, Mouse"
+                />
               </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="destructive">High</Badge>
-                <Button size="sm">Fix</Button>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Required Groups (comma-separated)
+                </label>
+                <textarea
+                  value={editingBaseline.requiredGroups?.join(', ') || ''}
+                  onChange={(e) => setEditingBaseline({
+                    ...editingBaseline,
+                    requiredGroups: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                  })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Department-All, VPN-Access, System-Access"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Common Licenses (comma-separated)
+                </label>
+                <textarea
+                  value={editingBaseline.commonLicenses?.join(', ') || ''}
+                  onChange={(e) => setEditingBaseline({
+                    ...editingBaseline,
+                    commonLicenses: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                  })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Microsoft Office, Adobe Reader, Chrome"
+                />
               </div>
             </div>
-
-            <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-              <div className="flex items-center space-x-3">
-                <Users className="h-5 w-5 text-yellow-500" />
-                <div>
-                  <p className="font-medium text-sm">Inconsistent Group Access</p>
-                  <p className="text-xs text-gray-600">5 users in Marketing missing required group memberships</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge className="bg-yellow-100 text-yellow-800">Medium</Badge>
-                <Button size="sm" variant="outline">Review</Button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
-              <div className="flex items-center space-x-3">
-                <Package className="h-5 w-5 text-orange-500" />
-                <div>
-                  <p className="font-medium text-sm">Outdated Hardware</p>
-                  <p className="text-xs text-gray-600">6 users across multiple departments with hardware past refresh cycle</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge className="bg-orange-100 text-orange-800">Medium</Badge>
-                <Button size="sm" variant="outline">Schedule</Button>
-              </div>
+            
+            <div className="flex gap-3 pt-6">
+              <button
+                onClick={() => setEditingBaseline(null)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleSaveBaseline(editingBaseline)}
+                disabled={saving}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                {saving ? 'Saving...' : 'Save Baseline'}
+              </button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   );
 } 

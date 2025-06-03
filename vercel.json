@@ -63,13 +63,5 @@
     "app/api/health/route.ts": {
       "maxDuration": 10
     }
-  },
-  "routes": [
-    {
-      "src": "/api/health",
-      "headers": {
-        "cache-control": "no-store"
-      }
-    }
-  ]
+  }
 } 
