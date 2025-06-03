@@ -6,6 +6,12 @@ declare global {
 
 const prisma = globalThis.prisma ?? new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+  // Disable prepared statements and add connection settings for serverless
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL + '?prepared_statements=false&connection_limit=1',
+    },
+  },
 })
 
 if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma
