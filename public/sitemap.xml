@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://startpoint-kh0tsq8qx-epoche.vercel.app/</loc>
+    <loc>https://startpoint-ar0yf7chj-epoche.vercel.app/</loc>
     <lastmod>2024-12-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://startpoint-kh0tsq8qx-epoche.vercel.app/assets</loc>
+    <loc>https://startpoint-ar0yf7chj-epoche.vercel.app/assets</loc>
     <lastmod>2024-12-28</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://startpoint-kh0tsq8qx-epoche.vercel.app/tasks</loc>
+    <loc>https://startpoint-ar0yf7chj-epoche.vercel.app/tasks</loc>
     <lastmod>2024-12-28</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://startpoint-kh0tsq8qx-epoche.vercel.app/users</loc>
+    <loc>https://startpoint-ar0yf7chj-epoche.vercel.app/users</loc>
     <lastmod>2024-12-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://startpoint-kh0tsq8qx-epoche.vercel.app/departments</loc>
+    <loc>https://startpoint-ar0yf7chj-epoche.vercel.app/departments</loc>
     <lastmod>2024-12-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://startpoint-kh0tsq8qx-epoche.vercel.app/reports</loc>
+    <loc>https://startpoint-ar0yf7chj-epoche.vercel.app/reports</loc>
     <lastmod>2024-12-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>

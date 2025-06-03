@@ -8,4 +8,4 @@ Disallow: /settings
 Disallow: /offboarding
 
 # Sitemap location
-Sitemap: https://startpoint-kh0tsq8qx-epoche.vercel.app/sitemap.xml 
+Sitemap: https://startpoint-ar0yf7chj-epoche.vercel.app/sitemap.xml 
