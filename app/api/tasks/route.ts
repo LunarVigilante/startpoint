@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma, { withRetry } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const tasks = await withRetry(() => prisma.task.findMany({
+    const tasks = await prisma.task.findMany({
       include: {
         creator: {
           select: {
@@ -33,7 +33,7 @@ export async function GET() {
       orderBy: {
         createdAt: 'desc',
       },
-    }));
+    });
 
     return NextResponse.json(tasks);
   } catch (error) {
@@ -63,9 +63,9 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Look up the actual IDs from the provided identifiers
-    const creatorUser = await withRetry(() => prisma.user.findUnique({
+    const creatorUser = await prisma.user.findUnique({
       where: { email: createdBy },
-    }));
+    });
     
     if (!creatorUser) {
       return NextResponse.json(
@@ -74,9 +74,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const site = await withRetry(() => prisma.site.findUnique({
+    const site = await prisma.site.findUnique({
       where: { code: siteId },
-    }));
+    });
     
     if (!site) {
       return NextResponse.json(
@@ -88,9 +88,9 @@ export async function POST(request: NextRequest) {
     // Look up assignee if provided
     let assigneeUserId = null;
     if (assignedTo) {
-      const assigneeUser = await withRetry(() => prisma.user.findUnique({
+      const assigneeUser = await prisma.user.findUnique({
         where: { email: assignedTo },
-      }));
+      });
       if (assigneeUser) {
         assigneeUserId = assigneeUser.id;
       }
@@ -99,19 +99,19 @@ export async function POST(request: NextRequest) {
     // Look up related user if provided
     let relatedUserId = null;
     if (userId) {
-      const relatedUser = await withRetry(() => prisma.user.findUnique({
+      const relatedUser = await prisma.user.findUnique({
         where: { email: userId },
-      }));
+      });
       if (relatedUser) {
         relatedUserId = relatedUser.id;
       }
     }
 
     // Generate task number
-    const taskCount = await withRetry(() => prisma.task.count());
+    const taskCount = await prisma.task.count();
     const taskNumber = `TSK-${String(taskCount + 1).padStart(6, '0')}`;
 
-    const task = await withRetry(() => prisma.task.create({
+    const task = await prisma.task.create({
       data: {
         taskNumber,
         title,
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
           },
         },
       },
-    }));
+    });
 
     return NextResponse.json(task, { status: 201 });
   } catch (error) {

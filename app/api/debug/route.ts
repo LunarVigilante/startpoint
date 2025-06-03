@@ -1,50 +1,45 @@
 import { NextResponse } from 'next/server';
-import prisma, { withRetry } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
     console.log('Testing database connection...');
     
-    // Test basic connection with retry
-    const connectionTest = await withRetry(async () => {
-      return await prisma.$queryRaw`SELECT 1 as test`
-    });
+    // Test basic connection
+    const connectionTest = await prisma.$queryRaw`SELECT 1 as test`;
     console.log('Connection test result:', connectionTest);
     
-    // Check what tables exist with retry
-    const tables = await withRetry(async () => {
-      return await prisma.$queryRaw`
-        SELECT table_name 
-        FROM information_schema.tables 
-        WHERE table_schema = 'public'
-      `
-    });
+    // Check what tables exist
+    const tables = await prisma.$queryRaw`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+    `;
     console.log('Available tables:', tables);
     
     // Try to count each table if it exists
     const tableCounts: any = {};
     
-    // Use withRetry for each count operation
     try {
-      tableCounts.sites = await withRetry(() => prisma.site.count());
+      tableCounts.sites = await prisma.site.count();
     } catch (e: any) {
       tableCounts.sites = `Error: ${e.message}`;
     }
     
     try {
-      tableCounts.users = await withRetry(() => prisma.user.count());
+      tableCounts.users = await prisma.user.count();
     } catch (e: any) {
       tableCounts.users = `Error: ${e.message}`;
     }
     
     try {
-      tableCounts.tasks = await withRetry(() => prisma.task.count());
+      tableCounts.tasks = await prisma.task.count();
     } catch (e: any) {
       tableCounts.tasks = `Error: ${e.message}`;
     }
     
     try {
-      tableCounts.assets = await withRetry(() => prisma.asset.count());
+      tableCounts.assets = await prisma.asset.count();
     } catch (e: any) {
       tableCounts.assets = `Error: ${e.message}`;
     }
@@ -56,7 +51,7 @@ export async function GET() {
       tableCounts,
       environment: {
         nodeEnv: process.env.NODE_ENV,
-        databaseUrl: process.env.DATABASE_URL ? 'SET' : 'NOT SET',
+        databaseUrl: process.env.DATABASE_URL ? 'SET (Neon)' : 'NOT SET',
         vercel: process.env.VERCEL ? 'true' : 'false',
       }
     });
@@ -70,7 +65,7 @@ export async function GET() {
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       environment: {
         nodeEnv: process.env.NODE_ENV,
-        databaseUrl: process.env.DATABASE_URL ? 'SET' : 'NOT SET',
+        databaseUrl: process.env.DATABASE_URL ? 'SET (Neon)' : 'NOT SET',
         vercel: process.env.VERCEL ? 'true' : 'false',
       }
     }, { status: 500 });
