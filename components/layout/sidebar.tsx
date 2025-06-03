@@ -12,6 +12,7 @@ import {
   FileText,
   Settings,
   Search,
+  CheckSquare,
 } from "lucide-react";
 
 const navigation = [
@@ -29,6 +30,11 @@ const navigation = [
     name: "Users",
     href: "/users",
     icon: Users,
+  },
+  {
+    name: "Tasks",
+    href: "/tasks",
+    icon: CheckSquare,
   },
   {
     name: "Departments",

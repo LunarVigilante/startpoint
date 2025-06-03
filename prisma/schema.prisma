@@ -56,6 +56,34 @@ enum UserStatus {
   TERMINATED
 }
 
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  WAITING
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskCategory {
+  USER_ONBOARDING
+  USER_OFFBOARDING
+  ASSET_ASSIGNMENT
+  ASSET_MAINTENANCE
+  ACCESS_MANAGEMENT
+  COMPLIANCE_CHECK
+  INVENTORY_AUDIT
+  SYSTEM_UPDATE
+  DEPARTMENT_REVIEW
+  OTHER
+}
+
 // Models
 model Site {
   id        String   @id @default(cuid())
@@ -68,6 +96,7 @@ model Site {
   users              User[]
   assets             Asset[]
   departmentBaselines DepartmentBaseline[]
+  tasks              Task[]
 
   @@map("sites")
 }
@@ -94,6 +123,11 @@ model User {
   groups             UserGroup[]
   distributionLists  UserDistributionList[]
   anomalies          AccessAnomaly[]
+  createdTasks       Task[] @relation("TaskCreator")
+  assignedTasks      Task[] @relation("TaskAssignee")
+  relatedTasks       Task[] @relation("TaskRelatedUser")
+  taskComments       TaskComment[]
+  taskAttachments    TaskAttachment[]
 
   @@map("users")
 }
@@ -126,6 +160,7 @@ model Asset {
   // Relations
   site Site  @relation(fields: [siteId], references: [id], onDelete: Cascade)
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  tasks Task[]
 
   @@map("assets")
 }
@@ -215,4 +250,71 @@ model AccessAnomaly {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("access_anomalies")
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  taskNumber  String       @unique
+  title       String
+  description String
+  category    TaskCategory
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(TODO)
+  createdBy   String       // Who created the task
+  assignedTo  String?      // Assigned team member
+  siteId      String
+  department  String?
+  userId      String?      // Related user if applicable
+  assetId     String?      // Related asset if applicable
+  notes       String?
+  estimatedHours Float?
+  actualHours    Float?
+  dueDate     DateTime?
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  creator User   @relation("TaskCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  assignee User? @relation("TaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  site     Site  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  user     User? @relation("TaskRelatedUser", fields: [userId], references: [id], onDelete: SetNull)
+  asset    Asset? @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  comments TaskComment[]
+  attachments TaskAttachment[]
+
+  @@map("tasks")
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  content   String
+  isInternal Boolean @default(false) // Internal notes vs public comments
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("task_comments")
+}
+
+model TaskAttachment {
+  id        String   @id @default(cuid())
+  taskId    String
+  fileName  String
+  fileSize  Int
+  mimeType  String
+  filePath  String   // Path to stored file
+  uploadedBy String
+  createdAt DateTime @default(now())
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  @@map("task_attachments")
 }
