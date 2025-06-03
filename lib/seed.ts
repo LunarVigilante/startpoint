@@ -5,266 +5,254 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seed...');
 
-  // Create a site
-  const site = await prisma.site.upsert({
-    where: { code: 'ANLIN_CLOVIS' },
+  // Create sites first
+  const site1 = await prisma.site.upsert({
+    where: { code: 'HQ001' },
     update: {},
     create: {
-      name: 'Anlin Windows & Doors - Clovis',
-      code: 'ANLIN_CLOVIS',
+      name: 'Corporate Headquarters',
+      code: 'HQ001',
     },
   });
 
-  console.log('✅ Site created:', site.name);
+  const site2 = await prisma.site.upsert({
+    where: { code: 'BR001' },
+    update: {},
+    create: {
+      name: 'Branch Office',
+      code: 'BR001',
+    },
+  });
+
+  console.log('✅ Sites created');
 
   // Create users
-  const users = await Promise.all([
-    prisma.user.upsert({
-      where: { email: 'john.smith@anlinwindows.com' },
-      update: {},
-      create: {
-        email: 'john.smith@anlinwindows.com',
-        employeeId: 'EMP001',
-        name: 'John Smith',
-        siteId: site.id,
-        department: 'Engineering',
-        jobTitle: 'Senior Software Engineer',
-        manager: 'Alice Johnson',
-        status: 'ACTIVE',
-        startDate: new Date('2023-01-15'),
-        lastReviewed: new Date('2024-01-15'),
-      },
-    }),
-    prisma.user.upsert({
-      where: { email: 'sarah.johnson@anlinwindows.com' },
-      update: {},
-      create: {
-        email: 'sarah.johnson@anlinwindows.com',
-        employeeId: 'EMP002',
-        name: 'Sarah Johnson',
-        siteId: site.id,
-        department: 'Marketing',
-        jobTitle: 'Marketing Manager',
-        manager: 'Bob Wilson',
-        status: 'ACTIVE',
-        startDate: new Date('2022-08-20'),
-        lastReviewed: new Date('2024-01-10'),
-      },
-    }),
-    prisma.user.upsert({
-      where: { email: 'mike.davis@anlinwindows.com' },
-      update: {},
-      create: {
-        email: 'mike.davis@anlinwindows.com',
-        employeeId: 'EMP003',
-        name: 'Mike Davis',
-        siteId: site.id,
-        department: 'Sales',
-        jobTitle: 'Sales Representative',
-        manager: 'Carol Brown',
-        status: 'ACTIVE',
-        startDate: new Date('2023-06-01'),
-        lastReviewed: new Date('2023-12-20'),
-      },
-    }),
-    prisma.user.upsert({
-      where: { email: 'emma.wilson@anlinwindows.com' },
-      update: {},
-      create: {
-        email: 'emma.wilson@anlinwindows.com',
-        employeeId: 'EMP004',
-        name: 'Emma Wilson',
-        siteId: site.id,
-        department: 'Engineering',
-        jobTitle: 'Frontend Developer',
-        manager: 'Alice Johnson',
-        status: 'ACTIVE',
-        startDate: new Date('2024-01-08'),
-        lastReviewed: new Date('2024-01-08'),
-      },
-    }),
-    prisma.user.upsert({
-      where: { email: 'alex.chen@anlinwindows.com' },
-      update: {},
-      create: {
-        email: 'alex.chen@anlinwindows.com',
-        employeeId: 'EMP005',
-        name: 'Alex Chen',
-        siteId: site.id,
-        department: 'IT',
-        jobTitle: 'System Administrator',
-        manager: 'David Lee',
-        status: 'ACTIVE',
-        startDate: new Date('2023-03-15'),
-        lastReviewed: new Date('2024-01-12'),
-      },
-    }),
-  ]);
-
-  console.log('✅ Users created:', users.length);
-
-  // Create assets
-  const assets = await Promise.all([
-    prisma.asset.create({
-      data: {
-        assetTag: 'LP-2024-001',
-        name: 'Dell Latitude 5520',
-        type: 'LAPTOP',
-        status: 'ASSIGNED',
-        siteId: site.id,
-        userId: users[0].id,
-        serialNumber: 'DL5520001',
-        manufacturer: 'Dell',
-        model: 'Latitude 5520',
-        assignedDate: new Date('2024-01-15'),
-        warrantyExpiry: new Date('2025-12-31'),
-        location: 'Clovis Office',
-        purchaseDate: new Date('2024-01-01'),
-        purchasePrice: 1200.00,
-        vendor: 'Dell Technologies',
-      },
-    }),
-    prisma.asset.create({
-      data: {
-        assetTag: 'MN-2024-015',
-        name: 'Dell UltraSharp 27"',
-        type: 'MONITOR',
-        status: 'AVAILABLE',
-        siteId: site.id,
-        serialNumber: 'DU27015',
-        manufacturer: 'Dell',
-        model: 'UltraSharp U2723QE',
-        warrantyExpiry: new Date('2026-06-15'),
-        location: 'IT Storage',
-        purchaseDate: new Date('2024-02-01'),
-        purchasePrice: 350.00,
-        vendor: 'Dell Technologies',
-      },
-    }),
-    prisma.asset.create({
-      data: {
-        assetTag: 'PH-2024-032',
-        name: 'iPhone 15 Pro',
-        type: 'PHONE',
-        status: 'ASSIGNED',
-        siteId: site.id,
-        userId: users[1].id,
-        serialNumber: 'IP15032',
-        manufacturer: 'Apple',
-        model: 'iPhone 15 Pro',
-        assignedDate: new Date('2024-01-10'),
-        warrantyExpiry: new Date('2025-09-20'),
-        location: 'Clovis Office',
-        purchaseDate: new Date('2024-01-05'),
-        purchasePrice: 999.00,
-        vendor: 'Apple Inc.',
-      },
-    }),
-  ]);
-
-  console.log('✅ Assets created:', assets.length);
-
-  // Create user licenses
-  await Promise.all([
-    prisma.userLicense.create({
-      data: {
-        userId: users[0].id,
-        name: 'Visual Studio Professional',
-        type: 'Development',
-        assignedDate: new Date('2023-01-15'),
-        notes: 'For software development',
-      },
-    }),
-    prisma.userLicense.create({
-      data: {
-        userId: users[1].id,
-        name: 'Adobe Creative Suite',
-        type: 'Design',
-        assignedDate: new Date('2022-08-20'),
-        notes: 'For marketing materials',
-      },
-    }),
-  ]);
-
-  // Create user groups
-  await Promise.all([
-    prisma.userGroup.create({
-      data: {
-        userId: users[0].id,
-        groupName: 'Engineering-All',
-        groupType: 'Department',
-        system: 'Active Directory',
-        addedDate: new Date('2023-01-15'),
-        critical: true,
-      },
-    }),
-    prisma.userGroup.create({
-      data: {
-        userId: users[1].id,
-        groupName: 'Marketing-All',
-        groupType: 'Department',
-        system: 'Active Directory',
-        addedDate: new Date('2022-08-20'),
-        critical: true,
-      },
-    }),
-  ]);
-
-  // Create access anomalies
-  await Promise.all([
-    prisma.accessAnomaly.create({
-      data: {
-        userId: users[0].id,
-        type: 'MISSING_STANDARD_ITEM',
-        description: 'Missing standard laptop configuration',
-        suggestion: 'Assign standard Dell Latitude with required specifications',
-        severity: 'HIGH',
-        status: 'OPEN',
-      },
-    }),
-    prisma.accessAnomaly.create({
-      data: {
-        userId: users[1].id,
-        type: 'EXCESSIVE_ACCESS',
-        description: 'Has admin access to multiple systems',
-        suggestion: 'Review and remove unnecessary admin privileges',
-        severity: 'MEDIUM',
-        status: 'OPEN',
-      },
-    }),
-  ]);
-
-  // Create department baselines
-  await prisma.departmentBaseline.create({
-    data: {
-      department: 'Engineering',
-      siteId: site.id,
-      standardAssets: JSON.stringify([
-        { type: 'LAPTOP', specs: 'Dell Latitude 5520 or equivalent' },
-        { type: 'MONITOR', specs: 'Dell UltraSharp 27" 4K' },
-        { type: 'KEYBOARD', specs: 'Mechanical keyboard preferred' },
-        { type: 'MOUSE', specs: 'Wireless mouse' },
-      ]),
-      requiredGroups: JSON.stringify([
-        'Engineering-All',
-        'VPN-Access',
-        'Git-Access',
-        'Development-Tools',
-      ]),
-      commonLicenses: JSON.stringify([
-        'Visual Studio Professional',
-        'JetBrains IntelliJ',
-        'Adobe Creative (limited)',
-      ]),
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@startpoint.com' },
+    update: {},
+    create: {
+      email: 'admin@startpoint.com',
+      name: 'System Administrator',
+      employeeId: 'EMP001',
+      siteId: site1.id,
+      department: 'IT',
+      jobTitle: 'IT Manager',
+      status: 'ACTIVE',
+      startDate: new Date('2024-01-01'),
     },
   });
 
+  const johnDoe = await prisma.user.upsert({
+    where: { email: 'john.doe@startpoint.com' },
+    update: {},
+    create: {
+      email: 'john.doe@startpoint.com',
+      name: 'John Doe',
+      employeeId: 'EMP002',
+      siteId: site1.id,
+      department: 'IT',
+      jobTitle: 'IT Technician',
+      status: 'ACTIVE',
+      startDate: new Date('2024-01-15'),
+    },
+  });
+
+  const janeDoe = await prisma.user.upsert({
+    where: { email: 'jane.doe@startpoint.com' },
+    update: {},
+    create: {
+      email: 'jane.doe@startpoint.com',
+      name: 'Jane Doe',
+      employeeId: 'EMP003',
+      siteId: site1.id,
+      department: 'HR',
+      jobTitle: 'HR Specialist',
+      status: 'ACTIVE',
+      startDate: new Date('2024-01-10'),
+    },
+  });
+
+  console.log('✅ Users created');
+
+  // Create some assets
+  const laptop1 = await prisma.asset.upsert({
+    where: { assetTag: 'LAP001' },
+    update: {},
+    create: {
+      assetTag: 'LAP001',
+      name: 'Dell Latitude 7420',
+      type: 'LAPTOP',
+      manufacturer: 'Dell',
+      model: 'Latitude 7420',
+      serialNumber: 'DL001234',
+      siteId: site1.id,
+      status: 'AVAILABLE',
+      condition: 'Good',
+      location: 'IT Storage',
+      purchaseDate: new Date('2024-01-01'),
+      purchasePrice: 1200.00,
+    },
+  });
+
+  const laptop2 = await prisma.asset.upsert({
+    where: { assetTag: 'LAP002' },
+    update: {},
+    create: {
+      assetTag: 'LAP002',
+      name: 'MacBook Pro 14"',
+      type: 'LAPTOP',
+      manufacturer: 'Apple',
+      model: 'MacBook Pro 14-inch',
+      serialNumber: 'MB001234',
+      siteId: site1.id,
+      userId: johnDoe.id,
+      status: 'ASSIGNED',
+      condition: 'Excellent',
+      location: 'Assigned to John Doe',
+      purchaseDate: new Date('2024-01-15'),
+      purchasePrice: 2500.00,
+      assignedDate: new Date('2024-01-16'),
+    },
+  });
+
+  console.log('✅ Assets created');
+
+  // Create department baselines
+  await prisma.departmentBaseline.upsert({
+    where: { 
+      department_siteId: {
+        department: 'IT',
+        siteId: site1.id,
+      }
+    },
+    update: {},
+    create: {
+      department: 'IT',
+      siteId: site1.id,
+      standardAssets: [
+        { type: 'LAPTOP', specs: 'Dell Latitude or MacBook Pro', required: true },
+        { type: 'MONITOR', specs: '24" or larger', required: false }
+      ],
+      requiredGroups: [
+        'IT_Admin',
+        'Domain_Users',
+        'VPN_Users'
+      ],
+      commonLicenses: [
+        'Microsoft 365',
+        'Windows 11 Pro',
+        'Adobe Creative Suite'
+      ],
+    },
+  });
+
+  console.log('✅ Department baselines created');
+
+  // Create sample tasks
+  const taskCount = await prisma.task.count();
+  
+  if (taskCount === 0) {
+    await prisma.task.createMany({
+      data: [
+        {
+          id: 'task1',
+          taskNumber: 'TSK-000001',
+          title: 'Onboard new employee - Jane Doe',
+          description: 'Set up computer, accounts, and access for new HR employee Jane Doe starting January 10th.',
+          category: 'USER_ONBOARDING',
+          priority: 'HIGH',
+          status: 'COMPLETED',
+          createdBy: adminUser.id,
+          assignedTo: johnDoe.id,
+          siteId: site1.id,
+          department: 'HR',
+          userId: janeDoe.id,
+          dueDate: new Date('2024-01-10'),
+          completedAt: new Date('2024-01-09'),
+          estimatedHours: 4,
+          actualHours: 3.5,
+        },
+        {
+          id: 'task2',
+          taskNumber: 'TSK-000002',
+          title: 'Monthly security compliance audit',
+          description: 'Review user access rights, update security policies, and ensure all systems are compliant with company security standards.',
+          category: 'COMPLIANCE_CHECK',
+          priority: 'MEDIUM',
+          status: 'IN_PROGRESS',
+          createdBy: adminUser.id,
+          assignedTo: johnDoe.id,
+          siteId: site1.id,
+          department: 'IT',
+          dueDate: new Date('2024-02-15'),
+          estimatedHours: 8,
+        },
+        {
+          id: 'task3',
+          taskNumber: 'TSK-000003',
+          title: 'Asset inventory verification',
+          description: 'Physical verification of all IT assets in HQ location, update asset database with current locations and conditions.',
+          category: 'INVENTORY_AUDIT',
+          priority: 'LOW',
+          status: 'TODO',
+          createdBy: adminUser.id,
+          siteId: site1.id,
+          department: 'IT',
+          dueDate: new Date('2024-03-01'),
+          estimatedHours: 12,
+        },
+        {
+          id: 'task4',
+          taskNumber: 'TSK-000004',
+          title: 'Update workstation for John Doe',
+          description: 'Upgrade RAM and install additional software on John\'s workstation to support new development projects.',
+          category: 'ASSET_MAINTENANCE',
+          priority: 'MEDIUM',
+          status: 'WAITING',
+          createdBy: adminUser.id,
+          assignedTo: johnDoe.id,
+          siteId: site1.id,
+          department: 'IT',
+          userId: johnDoe.id,
+          assetId: laptop2.id,
+          dueDate: new Date('2024-02-20'),
+          estimatedHours: 2,
+        },
+      ],
+    });
+
+    console.log('✅ Sample tasks created');
+  }
+
+  // Create some access anomalies for demonstration
+  await prisma.accessAnomaly.upsert({
+    where: { id: 'anomaly1' },
+    update: {},
+    create: {
+      id: 'anomaly1',
+      userId: janeDoe.id,
+      type: 'MISSING_STANDARD_ITEM',
+      description: 'User Jane Doe does not have the standard HR software license assigned',
+      suggestion: 'Assign Microsoft 365 license with HR-specific tools',
+      severity: 'MEDIUM',
+      status: 'OPEN',
+    },
+  });
+
+  console.log('✅ Sample anomalies created');
+
   console.log('🎉 Database seeded successfully!');
+  console.log('\n📊 Summary:');
+  console.log(`- Sites: 2`);
+  console.log(`- Users: 3`);
+  console.log(`- Assets: 2`);
+  console.log(`- Tasks: 4`);
+  console.log(`- Anomalies: 1`);
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e);
+    console.error('❌ Error seeding database:', e);
     process.exit(1);
   })
   .finally(async () => {

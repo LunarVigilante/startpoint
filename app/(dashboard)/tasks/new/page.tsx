@@ -49,6 +49,8 @@ export default function NewTaskPage() {
     setLoading(true);
 
     try {
+      // For now, we'll use the admin user ID from our seed data
+      // In a real app, this would come from authentication
       const response = await fetch('/api/tasks', {
         method: 'POST',
         headers: {
@@ -56,8 +58,8 @@ export default function NewTaskPage() {
         },
         body: JSON.stringify({
           ...formData,
-          createdBy: 'user_temp_id', // TODO: Replace with actual user ID from auth
-          siteId: 'site_temp_id', // TODO: Replace with actual site ID
+          createdBy: 'admin@startpoint.com', // Using email to find the user
+          siteId: 'HQ001', // Using site code to find the site
         }),
       });
 
