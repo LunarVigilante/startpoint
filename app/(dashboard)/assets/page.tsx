@@ -77,12 +77,12 @@ const AssetTypeIcons = {
 }
 
 const StatusColors = {
-  AVAILABLE: 'bg-green-100 text-green-800',
-  ASSIGNED: 'bg-blue-100 text-blue-800',
-  MAINTENANCE: 'bg-yellow-100 text-yellow-800',
-  RETIRED: 'bg-gray-100 text-gray-800',
-  LOST: 'bg-red-100 text-red-800',
-  STOLEN: 'bg-red-100 text-red-800',
+  AVAILABLE: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+  ASSIGNED: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+  MAINTENANCE: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+  RETIRED: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+  LOST: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+  STOLEN: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
 }
 
 export default function AssetsPage() {
@@ -283,12 +283,12 @@ export default function AssetsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Assets Management</h1>
-          <p className="text-gray-600">Manage hardware assets and assignments</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Assets Management</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage hardware assets and assignments</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
         >
           <Plus className="w-4 h-4" />
           Add Asset
@@ -297,49 +297,49 @@ export default function AssetsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-gray-900/25">
           <div className="flex items-center">
-            <Package className="w-8 h-8 text-blue-600" />
+            <Package className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Assets</p>
-              <p className="text-2xl font-bold text-gray-900">{assets.length}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Assets</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{assets.length}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-gray-900/25">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-green-600 rounded-full"></div>
+            <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+              <div className="w-4 h-4 bg-green-600 dark:bg-green-400 rounded-full"></div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Available</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Available</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {assets.filter(a => a.status === 'AVAILABLE').length}
               </p>
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-gray-900/25">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-blue-600 rounded-full"></div>
+            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+              <div className="w-4 h-4 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Assigned</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Assigned</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {assets.filter(a => a.status === 'ASSIGNED').length}
               </p>
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-gray-900/25">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-yellow-600 rounded-full"></div>
+            <div className="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+              <div className="w-4 h-4 bg-yellow-600 dark:bg-yellow-400 rounded-full"></div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Maintenance</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Maintenance</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {assets.filter(a => a.status === 'MAINTENANCE').length}
               </p>
             </div>
@@ -348,31 +348,31 @@ export default function AssetsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-gray-900/25">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Search Assets
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search by name, tag, serial, or user..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Filter by Status
             </label>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as AssetStatus | 'ALL')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="ALL">All Statuses</option>
               <option value="AVAILABLE">Available</option>
@@ -384,13 +384,13 @@ export default function AssetsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Filter by Type
             </label>
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as AssetType | 'ALL')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="ALL">All Types</option>
               <option value="LAPTOP">Laptop</option>
@@ -407,51 +407,51 @@ export default function AssetsPage() {
       </div>
 
       {/* Assets Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 shadow dark:shadow-gray-900/25 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Asset
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Assigned To
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Location
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                              {filteredAssets.map((asset) => {
                  const IconComponent = AssetTypeIcons[asset.type as keyof typeof AssetTypeIcons] || Package
                  return (
-                   <tr key={asset.id} className="hover:bg-gray-50">
+                   <tr key={asset.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                      <td className="px-6 py-4 whitespace-nowrap">
                        <div className="flex items-center">
-                         <IconComponent className="w-5 h-5 text-gray-400 mr-3" />
+                         <IconComponent className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" />
                          <div>
-                           <div className="text-sm font-medium text-gray-900">
+                           <div className="text-sm font-medium text-gray-900 dark:text-white">
                              {asset.name}
                            </div>
-                           <div className="text-sm text-gray-500">
+                           <div className="text-sm text-gray-500 dark:text-gray-400">
                              {asset.assetTag} • {asset.serialNumber}
                            </div>
                          </div>
                        </div>
                      </td>
                      <td className="px-6 py-4 whitespace-nowrap">
-                       <span className="text-sm text-gray-900">
+                       <span className="text-sm text-gray-900 dark:text-white">
                          {asset.type.replace('_', ' ')}
                        </span>
                      </td>
@@ -463,37 +463,37 @@ export default function AssetsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {asset.assignmentType === 'USER' && asset.user ? (
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {asset.user.name}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
                             {asset.user.department}
                           </div>
                         </div>
                       ) : asset.assignmentType === 'DEPARTMENT' && asset.assignedToDepartment ? (
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {asset.assignedToDepartment} Department
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
                             Department Asset
                           </div>
                         </div>
                       ) : asset.assignmentType === 'EQUIPMENT' && asset.assignedToEquipment ? (
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {asset.assignedToEquipment}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
                             Equipment/Location
                           </div>
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-500">Unassigned</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">Unassigned</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">
+                      <span className="text-sm text-gray-900 dark:text-white">
                         {asset.location || asset.site.name}
                       </span>
                     </td>
@@ -501,14 +501,14 @@ export default function AssetsPage() {
                       <div className="flex justify-end gap-2">
                         <button 
                           onClick={() => handleEditAsset(asset)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                           disabled={saving}
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button 
                           onClick={() => handleDeleteAsset(asset.id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                           disabled={saving}
                         >
                           <Trash2 className="w-4 h-4" />

@@ -73,9 +73,17 @@ export async function GET(request: NextRequest) {
 
     // Calculate health scores
     const departmentsWithHealth = departments.map((dept: any) => {
-      const assetCompliance = dept.totalAssets > 0 ? (dept.totalAssets / Math.max(dept.userCount, 1)) * 100 : 0;
-      const userActivity = dept.userCount > 0 ? (dept.activeUsers / dept.userCount) * 100 : 0;
-      const anomalyPenalty = Math.min(dept.anomalies * 5, 30); // Max 30% penalty
+      // Convert BigInt values to numbers for calculations
+      const userCount = Number(dept.userCount);
+      const activeUsers = Number(dept.activeUsers);
+      const totalAssets = Number(dept.totalAssets);
+      const totalTasks = Number(dept.totalTasks);
+      const todoTasks = Number(dept.todoTasks);
+      const anomalies = Number(dept.anomalies);
+      
+      const assetCompliance = totalAssets > 0 ? (totalAssets / Math.max(userCount, 1)) * 100 : 0;
+      const userActivity = userCount > 0 ? (activeUsers / userCount) * 100 : 0;
+      const anomalyPenalty = Math.min(anomalies * 5, 30); // Max 30% penalty
       
       const healthScore = Math.max(0, Math.min(100, 
         (assetCompliance * 0.4 + userActivity * 0.4 + (100 - anomalyPenalty) * 0.2)
@@ -84,12 +92,12 @@ export async function GET(request: NextRequest) {
       return {
         ...dept,
         healthScore: Math.round(healthScore),
-        userCount: Number(dept.userCount),
-        activeUsers: Number(dept.activeUsers),
-        totalAssets: Number(dept.totalAssets),
-        totalTasks: Number(dept.totalTasks),
-        todoTasks: Number(dept.todoTasks),
-        anomalies: Number(dept.anomalies),
+        userCount,
+        activeUsers,
+        totalAssets,
+        totalTasks,
+        todoTasks,
+        anomalies,
       };
     });
 
