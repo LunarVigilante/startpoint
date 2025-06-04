@@ -13,6 +13,7 @@ import {
   Settings,
   Search,
   CheckSquare,
+  AlertTriangle,
 } from "lucide-react";
 
 const navigation = [
@@ -40,6 +41,11 @@ const navigation = [
     name: "Departments",
     href: "/departments",
     icon: Building2,
+  },
+  {
+    name: "Anomalies",
+    href: "/anomalies",
+    icon: AlertTriangle,
   },
   {
     name: "Offboarding",

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +60,9 @@ function getTrendIcon(trend: string) {
 }
 
 export default function DepartmentsPage() {
+  const searchParams = useSearchParams()
+  const filterDepartment = searchParams.get('filter')
+  
   const [departments, setDepartments] = useState<Department[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -157,7 +161,14 @@ export default function DepartmentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Departments</h1>
-          <p className="text-gray-600 dark:text-gray-400">Analyze department health and standardization</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            Analyze department health and standardization
+            {filterDepartment && (
+              <span className="ml-2 text-blue-600 dark:text-blue-400">
+                • Viewing: {decodeURIComponent(filterDepartment)}
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex space-x-3">
           <Button variant="outline" className="dark:border-gray-600 dark:hover:bg-gray-700">
@@ -228,13 +239,27 @@ export default function DepartmentsPage() {
 
       {/* Department Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {departments.map((dept) => (
-          <Card key={`${dept.department}-${dept.siteId}`} className={`${getHealthScoreBg(dept.healthScore)} border-2`}>
+        {departments
+          .filter(dept => !filterDepartment || dept.department === decodeURIComponent(filterDepartment))
+          .map((dept) => (
+          <Card 
+            key={`${dept.department}-${dept.siteId}`} 
+            className={`${getHealthScoreBg(dept.healthScore)} border-2 ${
+              filterDepartment && dept.department === decodeURIComponent(filterDepartment) 
+                ? 'ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 dark:ring-offset-gray-900' 
+                : ''
+            }`}
+          >
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center space-x-2 dark:text-white">
                   <Building2 className="h-5 w-5 dark:text-gray-300" />
                   <span>{dept.department}</span>
+                  {filterDepartment && dept.department === decodeURIComponent(filterDepartment) && (
+                    <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                      Highlighted
+                    </Badge>
+                  )}
                 </CardTitle>
                 <div className="flex items-center space-x-2">
                   <span className={`text-2xl font-bold ${getHealthScoreColor(dept.healthScore)}`}>
@@ -337,6 +362,21 @@ export default function DepartmentsPage() {
           </Card>
         ))}
       </div>
+
+      {/* Show message if filtering and no departments match */}
+      {filterDepartment && !departments.some(dept => dept.department === decodeURIComponent(filterDepartment)) && (
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <Building2 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Department not found</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                No department named "{decodeURIComponent(filterDepartment)}" was found.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Baseline Editor Modal */}
       {editingBaseline && (

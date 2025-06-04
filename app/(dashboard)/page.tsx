@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { AlertTriangle, Users, HardDrive, TrendingUp, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, Users, HardDrive, TrendingUp, Clock, Eye, CheckCircle, ShieldAlert, UserX, ExternalLink } from 'lucide-react';
 
 interface DashboardStats {
   overview: {
@@ -42,6 +44,7 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +67,31 @@ export default function DashboardPage() {
 
     fetchStats();
   }, []);
+
+  const getAnomalyRemedySuggestion = (anomaly: any) => {
+    const suggestions: Record<string, string> = {
+      'EXCESSIVE_PERMISSIONS': 'Review and remove unnecessary group memberships. Consider principle of least privilege.',
+      'UNUSED_ACCOUNT': 'Disable account if inactive for over 90 days. Initiate offboarding if employee has left.',
+      'MISSING_MFA': 'Enable multi-factor authentication immediately. Schedule security awareness training.',
+      'SHARED_ACCOUNT': 'Create individual accounts for each user. Disable shared account access.',
+      'OUTDATED_ACCESS': 'Review and update access permissions based on current role. Remove obsolete permissions.',
+      'POLICY_VIOLATION': 'Ensure compliance with company policy. Document exception if legitimate business need.',
+      'SUSPICIOUS_LOGIN': 'Investigate login patterns. Reset password and enable additional security measures.',
+      'EQUIPMENT_MISMATCH': 'Verify asset assignment accuracy. Update records or redistribute equipment as needed.'
+    };
+    
+    // Extract anomaly type from description or use a default
+    const anomalyType = anomaly.type || 'POLICY_VIOLATION';
+    return suggestions[anomalyType] || 'Review this anomaly and take appropriate action based on company security policies.';
+  };
+
+  const navigateToAssets = () => router.push('/assets');
+  const navigateToUsers = () => router.push('/users'); 
+  const navigateToAnomalies = () => router.push('/anomalies');
+  const navigateToDepartments = () => router.push('/departments');
+  const navigateToDepartment = (department: string) => {
+    router.push(`/departments?filter=${encodeURIComponent(department)}`);
+  };
 
   if (loading) {
     return (
@@ -137,7 +165,10 @@ export default function DashboardPage() {
 
       {/* Overview Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+        <Card 
+          className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+          onClick={navigateToAssets}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-blue-900 dark:text-blue-100">Total Assets</CardTitle>
             <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full">
@@ -146,13 +177,17 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">{stats.overview.totalAssets}</div>
-            <p className="text-xs text-blue-700 dark:text-blue-300">
+            <p className="text-xs text-blue-700 dark:text-blue-300 flex items-center gap-1">
               {stats.assetsByStatus.assigned || 0} assigned, {stats.assetsByStatus.available || 0} available
+              <ExternalLink className="h-3 w-3" />
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
+        <Card 
+          className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+          onClick={navigateToUsers}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-green-900 dark:text-green-100">Active Users</CardTitle>
             <div className="p-2 bg-green-100 dark:bg-green-800 rounded-full">
@@ -161,13 +196,17 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-900 dark:text-green-100">{stats.overview.activeUsers}</div>
-            <p className="text-xs text-green-700 dark:text-green-300">
+            <p className="text-xs text-green-700 dark:text-green-300 flex items-center gap-1">
               Across {stats.departmentStats.length} departments
+              <ExternalLink className="h-3 w-3" />
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 border-red-200 dark:border-red-800">
+        <Card 
+          className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 border-red-200 dark:border-red-800 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+          onClick={navigateToAnomalies}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-red-900 dark:text-red-100">Open Anomalies</CardTitle>
             <div className="p-2 bg-red-100 dark:bg-red-800 rounded-full">
@@ -176,8 +215,9 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-900 dark:text-red-100">{stats.overview.openAnomalies}</div>
-            <p className="text-xs text-red-700 dark:text-red-300">
+            <p className="text-xs text-red-700 dark:text-red-300 flex items-center gap-1">
               Require attention
+              <ExternalLink className="h-3 w-3" />
             </p>
           </CardContent>
         </Card>
@@ -209,10 +249,17 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-6 pt-6">
             {stats.departmentStats.map((dept) => (
-              <div key={dept.department} className="space-y-3">
+              <div 
+                key={dept.department} 
+                className="space-y-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                onClick={() => navigateToDepartment(dept.department)}
+              >
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none text-gray-900 dark:text-white">{dept.department}</p>
+                    <p className="text-sm font-medium leading-none text-gray-900 dark:text-white flex items-center gap-2">
+                      {dept.department}
+                      <ExternalLink className="h-3 w-3 text-gray-400" />
+                    </p>
                     <p className="text-xs text-muted-foreground dark:text-gray-400">
                       {dept.userCount} users, {dept.assetCount} assets
                       {dept.anomaliesCount > 0 && (
@@ -245,13 +292,25 @@ export default function DashboardPage() {
           <CardContent className="pt-6">
             <div className="space-y-4">
               {stats.recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-center space-x-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+                <div 
+                  key={activity.id} 
+                  className="flex items-center space-x-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors group"
+                  onClick={() => {
+                    // Navigate based on activity type - could be asset or user
+                    if (activity.type === 'asset_update') {
+                      router.push('/assets');
+                    } else {
+                      router.push('/users');
+                    }
+                  }}
+                >
                   <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-full">
                     <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="space-y-1 flex-1">
-                    <p className="text-sm font-medium leading-none text-gray-900 dark:text-white">
+                    <p className="text-sm font-medium leading-none text-gray-900 dark:text-white flex items-center gap-2">
                       {activity.description}
+                      <Eye className="h-3 w-3 text-gray-400 group-hover:text-blue-500 transition-colors" />
                     </p>
                     <p className="text-xs text-muted-foreground dark:text-gray-400">
                       {activity.user} · {activity.department}
@@ -272,28 +331,63 @@ export default function DashboardPage() {
         <CardHeader className="border-b dark:border-gray-700">
           <CardTitle className="text-gray-900 dark:text-white">Recent Access Anomalies</CardTitle>
           <CardDescription className="dark:text-gray-400">
-            Issues detected in user access and asset assignments
+            Issues detected in user access and asset assignments with recommended actions
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
           <div className="space-y-4">
             {stats.recentAnomalies.map((anomaly) => (
-              <div key={anomaly.id} className="flex items-center justify-between p-4 border dark:border-gray-600 rounded-lg bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/50 dark:to-orange-950/50">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant={
-                      anomaly.severity === 'HIGH' ? 'destructive' :
-                      anomaly.severity === 'MEDIUM' ? 'default' : 'secondary'
-                    } className="dark:bg-red-900 dark:text-red-100">
-                      {anomaly.severity}
-                    </Badge>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{anomaly.user}</p>
-                    <p className="text-xs text-muted-foreground dark:text-gray-400">({anomaly.department})</p>
+              <div key={anomaly.id} className="border dark:border-gray-600 rounded-lg bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/50 dark:to-orange-950/50">
+                <div className="flex items-center justify-between p-4">
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={
+                        anomaly.severity === 'HIGH' ? 'destructive' :
+                        anomaly.severity === 'MEDIUM' ? 'default' : 'secondary'
+                      } className="dark:bg-red-900 dark:text-red-100">
+                        {anomaly.severity}
+                      </Badge>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{anomaly.user}</p>
+                      <p className="text-xs text-muted-foreground dark:text-gray-400">({anomaly.department})</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground dark:text-gray-400">{anomaly.description}</p>
+                    
+                    {/* Remedy Suggestion */}
+                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-md border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-start space-x-2">
+                        <ShieldAlert className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs font-medium text-blue-900 dark:text-blue-300 mb-1">Recommended Action:</p>
+                          <p className="text-xs text-blue-800 dark:text-blue-400">
+                            {getAnomalyRemedySuggestion(anomaly)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground dark:text-gray-400">{anomaly.description}</p>
+                  <div className="p-2 bg-red-100 dark:bg-red-900 rounded-full ml-4">
+                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  </div>
                 </div>
-                <div className="p-2 bg-red-100 dark:bg-red-900 rounded-full">
-                  <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                
+                {/* Action Buttons */}
+                <div className="px-4 pb-4 flex gap-2">
+                  <Button size="sm" variant="outline" className="text-xs dark:border-gray-600 dark:hover:bg-gray-700">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Mark Resolved
+                  </Button>
+                  <Button size="sm" variant="outline" className="text-xs dark:border-gray-600 dark:hover:bg-gray-700">
+                    <UserX className="h-3 w-3 mr-1" />
+                    Take Action
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="text-xs"
+                    onClick={() => navigateToAnomalies()}
+                  >
+                    View All
+                  </Button>
                 </div>
               </div>
             ))}

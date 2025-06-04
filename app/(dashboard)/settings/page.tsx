@@ -29,6 +29,30 @@ export default function SettingsPage() {
   // Form states
   const [newSite, setNewSite] = useState({ name: '', code: '' })
   const [editingSite, setEditingSite] = useState<Site | null>(null)
+  
+  // Notification settings
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailNotifications: true,
+    taskReminders: true,
+    systemAlerts: true,
+    assetUpdates: false,
+    maintenanceNotifications: true,
+    securityAlerts: true,
+    reportGenerationComplete: true,
+    weeklyDigest: false,
+  })
+  
+  // System settings
+  const [systemSettings, setSystemSettings] = useState({
+    dataRetentionDays: 365,
+    autoBackup: true,
+    maintenanceMode: false,
+    debugLogging: false,
+    sessionTimeout: 30,
+    maxLoginAttempts: 5,
+    passwordExpiration: 90,
+    requireMFA: false,
+  })
 
   useEffect(() => {
     fetchSettings()
@@ -169,60 +193,59 @@ export default function SettingsPage() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Settings className="w-8 h-8 text-gray-600" />
+        <Settings className="w-8 h-8 text-gray-600 dark:text-gray-400" />
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600">Manage system configuration and preferences</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage system configuration and preferences</p>
         </div>
       </div>
 
       {/* System Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-gray-900/25">
           <div className="flex items-center">
-            <Building2 className="w-8 h-8 text-blue-600" />
+            <Building2 className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Sites</p>
-              <p className="text-2xl font-bold text-gray-900">{settings?.sites.length || 0}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Sites</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{settings?.sites.length || 0}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-gray-900/25">
           <div className="flex items-center">
-            <Users className="w-8 h-8 text-green-600" />
+            <Users className="w-8 h-8 text-green-600 dark:text-green-400" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Active Users</p>
-              <p className="text-2xl font-bold text-gray-900">{settings?.userCount || 0}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Users</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{settings?.userCount || 0}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-gray-900/25">
           <div className="flex items-center">
-            <Database className="w-8 h-8 text-purple-600" />
+            <Database className="w-8 h-8 text-purple-600 dark:text-purple-400" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Assets</p>
-              <p className="text-2xl font-bold text-gray-900">{settings?.assetCount || 0}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Assets</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{settings?.assetCount || 0}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-gray-900/25">
           <div className="flex items-center">
-            <Shield className="w-8 h-8 text-orange-600" />
+            <Shield className="w-8 h-8 text-orange-600 dark:text-orange-400" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Active Tasks</p>
-              <p className="text-2xl font-bold text-gray-900">{settings?.taskCount || 0}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Tasks</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{settings?.taskCount || 0}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/25">
+        <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="flex space-x-8 px-6">
             {[
               { id: 'sites', label: 'Sites', icon: Building2 },
-              { id: 'users', label: 'Users', icon: Users },
               { id: 'notifications', label: 'Notifications', icon: Bell },
               { id: 'system', label: 'System', icon: Settings },
             ].map((tab) => {
@@ -326,45 +349,88 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Users Tab */}
-          {activeTab === 'users' && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-medium text-gray-900">User Management</h2>
-                <p className="text-gray-600">Manage user accounts and permissions</p>
-              </div>
-              <div className="bg-blue-50 rounded-lg p-8 text-center">
-                <Users className="mx-auto h-12 w-12 text-blue-600" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">User Management Available</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Full user management functionality is available on the dedicated users page
-                </p>
-                <div className="mt-4">
-                  <a
-                    href="/users"
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
-                  >
-                    <Users className="w-4 h-4 mr-2" />
-                    Go to User Management
-                  </a>
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {/* Notifications Tab */}
           {activeTab === 'notifications' && (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-medium text-gray-900">Notification Settings</h2>
-                <p className="text-gray-600">Configure system notifications and alerts</p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-lg font-medium text-gray-900 dark:text-white">Notification Settings</h2>
+                  <p className="text-gray-600 dark:text-gray-400">Configure system notifications and alerts</p>
+                </div>
+                <button
+                  onClick={() => {
+                    // Save notification settings logic
+                    console.log('Saving notification settings:', notificationSettings)
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                >
+                  <Save className="w-4 h-4" />
+                  Save Settings
+                </button>
               </div>
-              <div className="bg-gray-50 rounded-lg p-8 text-center">
-                <Bell className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Notification Settings</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Notification configuration will be available in the next update
-                </p>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Email Notifications</h3>
+                <div className="space-y-4">
+                  {[
+                    { key: 'emailNotifications', label: 'Enable Email Notifications', description: 'Receive notifications via email' },
+                    { key: 'taskReminders', label: 'Task Reminders', description: 'Get reminders for due tasks and assignments' },
+                    { key: 'systemAlerts', label: 'System Alerts', description: 'Important system status and error notifications' },
+                    { key: 'assetUpdates', label: 'Asset Updates', description: 'Notifications when assets are modified or updated' },
+                  ].map((setting) => (
+                    <div key={setting.key} className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">{setting.label}</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{setting.description}</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationSettings[setting.key as keyof typeof notificationSettings]}
+                          onChange={(e) => setNotificationSettings(prev => ({
+                            ...prev,
+                            [setting.key]: e.target.checked
+                          }))}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">System Notifications</h3>
+                <div className="space-y-4">
+                  {[
+                    { key: 'maintenanceNotifications', label: 'Maintenance Alerts', description: 'Notifications about scheduled maintenance' },
+                    { key: 'securityAlerts', label: 'Security Alerts', description: 'Critical security and access notifications' },
+                    { key: 'reportGenerationComplete', label: 'Report Generation', description: 'Alerts when reports are ready' },
+                    { key: 'weeklyDigest', label: 'Weekly Digest', description: 'Weekly summary of system activity' },
+                  ].map((setting) => (
+                    <div key={setting.key} className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">{setting.label}</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{setting.description}</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationSettings[setting.key as keyof typeof notificationSettings]}
+                          onChange={(e) => setNotificationSettings(prev => ({
+                            ...prev,
+                            [setting.key]: e.target.checked
+                          }))}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -372,16 +438,203 @@ export default function SettingsPage() {
           {/* System Tab */}
           {activeTab === 'system' && (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-medium text-gray-900">System Configuration</h2>
-                <p className="text-gray-600">Advanced system settings and configuration</p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-lg font-medium text-gray-900 dark:text-white">System Configuration</h2>
+                  <p className="text-gray-600 dark:text-gray-400">Advanced system settings and configuration</p>
+                </div>
+                <button
+                  onClick={() => {
+                    // Save system settings logic
+                    console.log('Saving system settings:', systemSettings)
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                >
+                  <Save className="w-4 h-4" />
+                  Save Settings
+                </button>
               </div>
-              <div className="bg-gray-50 rounded-lg p-8 text-center">
-                <Settings className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">System Settings</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Advanced configuration options will be available in the next update
-                </p>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Data & Backup Settings */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Data & Backup</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Data Retention (days)
+                      </label>
+                      <input
+                        type="number"
+                        value={systemSettings.dataRetentionDays}
+                        onChange={(e) => setSystemSettings(prev => ({
+                          ...prev,
+                          dataRetentionDays: parseInt(e.target.value) || 365
+                        }))}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        min="30"
+                        max="2555"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">Automatic Backup</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Enable daily automatic backups</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={systemSettings.autoBackup}
+                          onChange={(e) => setSystemSettings(prev => ({
+                            ...prev,
+                            autoBackup: e.target.checked
+                          }))}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Security Settings */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Security</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Session Timeout (minutes)
+                      </label>
+                      <input
+                        type="number"
+                        value={systemSettings.sessionTimeout}
+                        onChange={(e) => setSystemSettings(prev => ({
+                          ...prev,
+                          sessionTimeout: parseInt(e.target.value) || 30
+                        }))}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        min="5"
+                        max="480"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Max Login Attempts
+                      </label>
+                      <input
+                        type="number"
+                        value={systemSettings.maxLoginAttempts}
+                        onChange={(e) => setSystemSettings(prev => ({
+                          ...prev,
+                          maxLoginAttempts: parseInt(e.target.value) || 5
+                        }))}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        min="3"
+                        max="10"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Password Expiration (days)
+                      </label>
+                      <input
+                        type="number"
+                        value={systemSettings.passwordExpiration}
+                        onChange={(e) => setSystemSettings(prev => ({
+                          ...prev,
+                          passwordExpiration: parseInt(e.target.value) || 90
+                        }))}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        min="30"
+                        max="365"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">Require MFA</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Multi-factor authentication required</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={systemSettings.requireMFA}
+                          onChange={(e) => setSystemSettings(prev => ({
+                            ...prev,
+                            requireMFA: e.target.checked
+                          }))}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* System Maintenance */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">System Maintenance</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">Maintenance Mode</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Temporarily disable user access</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={systemSettings.maintenanceMode}
+                          onChange={(e) => setSystemSettings(prev => ({
+                            ...prev,
+                            maintenanceMode: e.target.checked
+                          }))}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div>
+                      </label>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">Debug Logging</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Enable detailed system logging</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={systemSettings.debugLogging}
+                          onChange={(e) => setSystemSettings(prev => ({
+                            ...prev,
+                            debugLogging: e.target.checked
+                          }))}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* System Information */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">System Information</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Version</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">2.1.0</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Database</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">PostgreSQL 15.4</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Last Backup</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">Today, 2:00 AM</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Uptime</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">15 days, 4 hours</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
