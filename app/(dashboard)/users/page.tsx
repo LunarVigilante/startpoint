@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Plus, Edit, Trash2, User, MapPin, Building, Calendar, Shield } from 'lucide-react'
+import { Search, Plus, Edit, Trash2, User, MapPin, Building, Calendar, Shield, Eye } from 'lucide-react'
+import { UserDetailModal } from '@/components/ui/user-detail-modal'
 
 type User = {
   id: string
@@ -50,7 +51,9 @@ export default function UsersPage() {
   const [filterDepartment, setFilterDepartment] = useState('ALL')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showUserDetailModal, setShowUserDetailModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [selectedUserId, setSelectedUserId] = useState<string>('')
   const [saving, setSaving] = useState(false)
   
   // Form state for new user
@@ -138,6 +141,11 @@ export default function UsersPage() {
   const handleEditUser = (user: User) => {
     setEditingUser(user)
     setShowEditModal(true)
+  }
+
+  const handleViewUserDetails = (userId: string) => {
+    setSelectedUserId(userId)
+    setShowUserDetailModal(true)
   }
 
   const handleUpdateUser = async (e: React.FormEvent) => {
@@ -413,8 +421,16 @@ export default function UsersPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-2">
                       <button 
+                        onClick={() => handleViewUserDetails(user.id)}
+                        className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+                        title="View Details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button 
                         onClick={() => handleEditUser(user)}
                         className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                        title="Edit User"
                         disabled={saving}
                       >
                         <Edit className="w-4 h-4" />
@@ -422,6 +438,7 @@ export default function UsersPage() {
                       <button 
                         onClick={() => handleDeleteUser(user.id)}
                         className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                        title="Delete User"
                         disabled={saving}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -673,6 +690,13 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+
+      {/* User Detail Modal */}
+      <UserDetailModal
+        userId={selectedUserId}
+        isOpen={showUserDetailModal}
+        onClose={() => setShowUserDetailModal(false)}
+      />
     </div>
   )
 } 

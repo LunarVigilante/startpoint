@@ -55,7 +55,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status, priority, description, dueDate, serviceNowTicket } = body;
+    const { status, priority, description, dueDate, serviceNowTicket, checklist } = body;
 
     // Check if task exists
     const existingTask = await withRetry(() => prisma.task.findUnique({
@@ -80,6 +80,9 @@ export async function PUT(
     }
     if (serviceNowTicket !== undefined) {
       updateData.serviceNowTicket = serviceNowTicket || null;
+    }
+    if (checklist !== undefined) {
+      updateData.checklist = checklist;
     }
 
     // Set completion date if status is being set to RESOLVED or CLOSED
