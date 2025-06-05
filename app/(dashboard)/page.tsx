@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { ActivityDetailModal } from '@/components/ui/activity-detail-modal';
-import { AlertTriangle, Users, HardDrive, TrendingUp, Clock, Eye, CheckCircle, ShieldAlert, UserX, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Users, HardDrive, TrendingUp, Clock, Eye, CheckCircle, ShieldAlert, UserX, ExternalLink, Laptop, Smartphone, Tablet, Printer, Monitor, Plus, Copy, FileText } from 'lucide-react';
 
 interface DashboardStats {
   overview: {
@@ -17,6 +17,21 @@ interface DashboardStats {
     avgDepartmentHealth: number;
   };
   assetsByStatus: Record<string, number>;
+  assetCategories: {
+    computers: {
+      total: number;
+      laptops: number;
+      desktops: number;
+    };
+    mobileDevices: {
+      total: number;
+      tablets: number;
+      phones: number;
+    };
+    printers: number;
+    miscellaneous: number;
+    consumables: number;
+  };
   departmentStats: Array<{
     department: string;
     userCount: number;
@@ -177,8 +192,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Asset Categories Overview */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card 
           className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
           onClick={navigateToAssets}
@@ -193,6 +208,174 @@ export default function DashboardPage() {
             <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">{stats.overview.totalAssets}</div>
             <p className="text-xs text-blue-700 dark:text-blue-300 flex items-center gap-1">
               {stats.assetsByStatus.assigned || 0} assigned, {stats.assetsByStatus.available || 0} available
+              <ExternalLink className="h-3 w-3" />
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950 dark:to-indigo-900 border-indigo-200 dark:border-indigo-800 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+          onClick={() => router.push('/assets?filter=computers')}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-indigo-900 dark:text-indigo-100">Computers</CardTitle>
+            <div className="p-2 bg-indigo-100 dark:bg-indigo-800 rounded-full">
+              <Laptop className="h-4 w-4 text-indigo-600 dark:text-indigo-300" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">{stats.assetCategories.computers.total}</div>
+            <p className="text-xs text-indigo-700 dark:text-indigo-300 flex items-center gap-1">
+              {stats.assetCategories.computers.laptops} laptops, {stats.assetCategories.computers.desktops} desktops
+              <ExternalLink className="h-3 w-3" />
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-950 dark:to-cyan-900 border-cyan-200 dark:border-cyan-800 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+          onClick={() => router.push('/assets?filter=mobile')}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-cyan-900 dark:text-cyan-100">Mobile Devices</CardTitle>
+            <div className="p-2 bg-cyan-100 dark:bg-cyan-800 rounded-full">
+              <Smartphone className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-cyan-900 dark:text-cyan-100">{stats.assetCategories.mobileDevices.total}</div>
+            <p className="text-xs text-cyan-700 dark:text-cyan-300 flex items-center gap-1">
+              {stats.assetCategories.mobileDevices.tablets} tablets, {stats.assetCategories.mobileDevices.phones} phones
+              <ExternalLink className="h-3 w-3" />
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200 dark:border-orange-800 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+          onClick={() => router.push('/assets?filter=printers')}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-orange-900 dark:text-orange-100">Printers</CardTitle>
+            <div className="p-2 bg-orange-100 dark:bg-orange-800 rounded-full">
+              <Printer className="h-4 w-4 text-orange-600 dark:text-orange-300" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-900 dark:text-orange-100">{stats.assetCategories.printers}</div>
+            <p className="text-xs text-orange-700 dark:text-orange-300 flex items-center gap-1">
+              All printer types
+              <ExternalLink className="h-3 w-3" />
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 border-slate-200 dark:border-slate-800 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+          onClick={() => router.push('/assets?filter=misc')}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-900 dark:text-slate-100">Miscellaneous</CardTitle>
+            <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+              <Monitor className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.assetCategories.miscellaneous}</div>
+            <p className="text-xs text-slate-700 dark:text-slate-300 flex items-center gap-1">
+              Monitors, docks, etc.
+              <ExternalLink className="h-3 w-3" />
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+          onClick={() => router.push('/assets?filter=consumables')}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-green-900 dark:text-green-100">Consumables</CardTitle>
+            <div className="p-2 bg-green-100 dark:bg-green-800 rounded-full">
+              <Users className="h-4 w-4 text-green-600 dark:text-green-300" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-900 dark:text-green-100">{stats.assetCategories.consumables}</div>
+            <p className="text-xs text-green-700 dark:text-green-300 flex items-center gap-1">
+              Toner, cables, etc.
+              <ExternalLink className="h-3 w-3" />
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-6 shadow-lg">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Create New Asset</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Choose how you'd like to create a new asset</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Button
+            onClick={() => router.push('/assets/create?mode=scratch')}
+            variant="outline"
+            className="p-6 h-auto flex flex-col items-center gap-3 border-2 border-dashed hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20"
+          >
+            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+              <Plus className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="text-center">
+              <div className="font-medium text-gray-900 dark:text-white">From Scratch</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Create a completely new asset</div>
+            </div>
+          </Button>
+
+          <Button
+            onClick={() => router.push('/assets/create?mode=template')}
+            variant="outline"
+            className="p-6 h-auto flex flex-col items-center gap-3 border-2 border-dashed hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950/20"
+          >
+            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
+              <FileText className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="text-center">
+              <div className="font-medium text-gray-900 dark:text-white">From Template</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Use predefined templates</div>
+            </div>
+          </Button>
+
+          <Button
+            onClick={() => router.push('/assets/create?mode=copy')}
+            variant="outline"
+            className="p-6 h-auto flex flex-col items-center gap-3 border-2 border-dashed hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+          >
+            <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
+              <Copy className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div className="text-center">
+              <div className="font-medium text-gray-900 dark:text-white">Copy Existing</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Duplicate an existing asset</div>
+            </div>
+          </Button>
+        </div>
+      </div>
+
+      {/* System Overview */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card 
+          className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 border-red-200 dark:border-red-800 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+          onClick={navigateToAnomalies}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-red-900 dark:text-red-100">Open Anomalies</CardTitle>
+            <div className="p-2 bg-red-100 dark:bg-red-800 rounded-full">
+              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-300" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-900 dark:text-red-100">{stats.overview.openAnomalies}</div>
+            <p className="text-xs text-red-700 dark:text-red-300 flex items-center gap-1">
+              Require attention
               <ExternalLink className="h-3 w-3" />
             </p>
           </CardContent>
@@ -218,25 +401,9 @@ export default function DashboardPage() {
         </Card>
 
         <Card 
-          className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 border-red-200 dark:border-red-800 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
-          onClick={navigateToAnomalies}
+          className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800 cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]"
+          onClick={navigateToDepartments}
         >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-red-900 dark:text-red-100">Open Anomalies</CardTitle>
-            <div className="p-2 bg-red-100 dark:bg-red-800 rounded-full">
-              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-300" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-900 dark:text-red-100">{stats.overview.openAnomalies}</div>
-            <p className="text-xs text-red-700 dark:text-red-300 flex items-center gap-1">
-              Require attention
-              <ExternalLink className="h-3 w-3" />
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-purple-900 dark:text-purple-100">Avg Health Score</CardTitle>
             <div className="p-2 bg-purple-100 dark:bg-purple-800 rounded-full">
@@ -245,8 +412,24 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">{stats.overview.avgDepartmentHealth}%</div>
-            <p className="text-xs text-purple-700 dark:text-purple-300">
+            <p className="text-xs text-purple-700 dark:text-purple-300 flex items-center gap-1">
               Department average
+              <ExternalLink className="h-3 w-3" />
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-950 dark:to-yellow-900 border-yellow-200 dark:border-yellow-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-yellow-900 dark:text-yellow-100">System Status</CardTitle>
+            <div className="p-2 bg-yellow-100 dark:bg-yellow-800 rounded-full">
+              <CheckCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-300" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">Online</div>
+            <p className="text-xs text-yellow-700 dark:text-yellow-300">
+              All systems operational
             </p>
           </CardContent>
         </Card>

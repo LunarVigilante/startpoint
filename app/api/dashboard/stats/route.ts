@@ -26,6 +26,62 @@ export async function GET() {
       _count: true,
     }));
     
+    // Get asset type breakdown for categorized stats
+    const assetsByType = await withRetry(() => prisma.asset.groupBy({
+      by: ['type'],
+      _count: true,
+    }));
+    
+    // Calculate categorized asset counts
+    const assetCategories = {
+      computers: {
+        total: 0,
+        laptops: 0,
+        desktops: 0,
+      },
+      mobileDevices: {
+        total: 0,
+        tablets: 0,
+        phones: 0,
+      },
+      printers: 0,
+      miscellaneous: 0,
+      consumables: 0, // This might need to be tracked separately or with a category field
+    };
+
+    assetsByType.forEach((item: any) => {
+      const count = item._count;
+      switch (item.type) {
+        case 'LAPTOP':
+          assetCategories.computers.laptops = count;
+          assetCategories.computers.total += count;
+          break;
+        case 'DESKTOP':
+          assetCategories.computers.desktops = count;
+          assetCategories.computers.total += count;
+          break;
+        case 'TABLET':
+          assetCategories.mobileDevices.tablets = count;
+          assetCategories.mobileDevices.total += count;
+          break;
+        case 'PHONE':
+          assetCategories.mobileDevices.phones = count;
+          assetCategories.mobileDevices.total += count;
+          break;
+        case 'PRINTER':
+          assetCategories.printers = count;
+          break;
+        case 'CONSUMABLE':
+          assetCategories.consumables = count;
+          break;
+        case 'MONITOR':
+        case 'NETWORK_EQUIPMENT':
+        case 'OTHER_HARDWARE':
+          assetCategories.miscellaneous += count;
+          break;
+      }
+    });
+    
     // Get users by department
     const usersByDepartment = await withRetry(() => prisma.user.groupBy({
       by: ['department'],
@@ -118,6 +174,7 @@ export async function GET() {
         acc[item.status.toLowerCase()] = item._count;
         return acc;
       }, {} as Record<string, number>),
+      assetCategories,
       departmentStats,
       recentActivity: recentAssets.slice(0, 5).map((asset: any) => ({
         id: asset.id,

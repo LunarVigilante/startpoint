@@ -24,6 +24,7 @@ enum AssetType {
   PRINTER
   NETWORK_EQUIPMENT
   OTHER_HARDWARE
+  CONSUMABLE
 }
 
 enum AssetStatus {
