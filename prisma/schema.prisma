@@ -157,11 +157,30 @@ model Asset {
   status          AssetStatus    @default(AVAILABLE)
   condition       String?
   location        String?
+  
+  // Enhanced tracking fields
+  cost            Float?         // Purchase cost
+  notes           String?        // General notes
+  
+  // Purchase information
   purchaseDate    DateTime?
   purchasePrice   Float?
   vendor          String?
   invoiceNumber   String?
   warrantyExpiry  DateTime?
+  
+  // Hardware specifications (JSON for flexibility)
+  specifications  Json?          // RAM, CPU, Storage, etc.
+  
+  // Mobile device specific fields
+  imei            String?        // For phones and cellular devices
+  phoneNumber     String?        // For phones and cellular-capable devices
+  
+  // Photo and documentation
+  photoUrl        String?        // URL to asset photo
+  photoFilename   String?        // Original filename if uploaded
+  
+  // System fields
   history         Json?          // JSON field for tracking assignment history
   maintenanceLog  Json?          // JSON field for maintenance records
   createdAt       DateTime       @default(now())

@@ -52,6 +52,16 @@ export async function POST(request: NextRequest) {
       assignmentType = 'UNASSIGNED',
       assignedToDepartment,
       assignedToEquipment,
+      // New fields
+      cost,
+      notes,
+      purchaseDate,
+      specifications,
+      imei,
+      phoneNumber,
+      photoUrl,
+      photoFilename,
+      condition = 'Good',
     } = body;
 
     // Validate required fields
@@ -136,6 +146,16 @@ export async function POST(request: NextRequest) {
         assignedToEquipment: assignmentType === 'EQUIPMENT' ? assignedToEquipment : null,
         assignedDate: assignmentType !== 'UNASSIGNED' ? new Date() : null,
         status,
+        // New fields
+        cost: cost ? parseFloat(cost) : null,
+        notes: notes || null,
+        purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
+        specifications: specifications || null,
+        imei: imei || null,
+        phoneNumber: phoneNumber || null,
+        photoUrl: photoUrl || null,
+        photoFilename: photoFilename || null,
+        condition: condition || 'Good',
       },
       include: {
         site: {

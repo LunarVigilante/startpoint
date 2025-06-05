@@ -182,6 +182,58 @@ function DepartmentsContent() {
         </div>
       </div>
 
+      {/* Health Score Explanation */}
+      <Card className="dark:bg-gray-800 dark:border-gray-700 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">Understanding Department Health Scores</h3>
+                <p className="text-sm text-blue-800 dark:text-blue-400 mb-3">
+                  Health scores provide a comprehensive view of each department's IT standardization and security posture. 
+                  Scores are calculated based on multiple factors to help identify areas for improvement.
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                  <div className="bg-white dark:bg-gray-700 p-3 rounded-lg border border-blue-200 dark:border-gray-600">
+                    <h4 className="font-medium text-green-700 dark:text-green-400 mb-1">Good Health (90%+)</h4>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      • Low anomaly count<br/>
+                      • High user activity<br/>
+                      • Standardized equipment<br/>
+                      • Completed tasks
+                    </p>
+                  </div>
+                  
+                  <div className="bg-white dark:bg-gray-700 p-3 rounded-lg border border-blue-200 dark:border-gray-600">
+                    <h4 className="font-medium text-yellow-700 dark:text-yellow-400 mb-1">Needs Attention (75-89%)</h4>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      • Some unresolved issues<br/>
+                      • Partial compliance<br/>
+                      • Minor deviations<br/>
+                      • Room for improvement
+                    </p>
+                  </div>
+                  
+                  <div className="bg-white dark:bg-gray-700 p-3 rounded-lg border border-blue-200 dark:border-gray-600">
+                    <h4 className="font-medium text-red-700 dark:text-red-400 mb-1">Critical Issues (&lt;75%)</h4>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      • Multiple anomalies<br/>
+                      • Non-standard setup<br/>
+                      • Security concerns<br/>
+                      • Immediate action needed
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Overall Health Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="dark:bg-gray-800 dark:border-gray-700">

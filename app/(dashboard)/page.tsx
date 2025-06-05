@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { ActivityDetailModal } from '@/components/ui/activity-detail-modal';
 import { AlertTriangle, Users, HardDrive, TrendingUp, Clock, Eye, CheckCircle, ShieldAlert, UserX, ExternalLink } from 'lucide-react';
 
 interface DashboardStats {
@@ -48,6 +49,10 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<{
+    id: string;
+    type: 'asset_update' | 'user_update';
+  } | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -91,6 +96,15 @@ export default function DashboardPage() {
   const navigateToDepartments = () => router.push('/departments');
   const navigateToDepartment = (department: string) => {
     router.push(`/departments?filter=${encodeURIComponent(department)}`);
+  };
+
+  const handleActivityClick = (activity: any) => {
+    // Extract asset/user ID from the activity and set the modal state
+    const activityId = activity.id.replace('activity_', ''); // Remove prefix if exists
+    setSelectedActivity({
+      id: activityId,
+      type: activity.type === 'asset_update' ? 'asset_update' : 'user_update'
+    });
   };
 
   if (loading) {
@@ -295,14 +309,7 @@ export default function DashboardPage() {
                 <div 
                   key={activity.id} 
                   className="flex items-center space-x-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors group"
-                  onClick={() => {
-                    // Navigate based on activity type - could be asset or user
-                    if (activity.type === 'asset_update') {
-                      router.push('/assets');
-                    } else {
-                      router.push('/users');
-                    }
-                  }}
+                  onClick={() => handleActivityClick(activity)}
                 >
                   <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-full">
                     <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -331,69 +338,42 @@ export default function DashboardPage() {
         <CardHeader className="border-b dark:border-gray-700">
           <CardTitle className="text-gray-900 dark:text-white">Recent Access Anomalies</CardTitle>
           <CardDescription className="dark:text-gray-400">
-            Issues detected in user access and asset assignments with recommended actions
+            Issues detected in user access and asset assignments
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
           <div className="space-y-4">
             {stats.recentAnomalies.map((anomaly) => (
-              <div key={anomaly.id} className="border dark:border-gray-600 rounded-lg bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/50 dark:to-orange-950/50">
-                <div className="flex items-center justify-between p-4">
-                  <div className="space-y-2 flex-1">
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={
-                        anomaly.severity === 'HIGH' ? 'destructive' :
-                        anomaly.severity === 'MEDIUM' ? 'default' : 'secondary'
-                      } className="dark:bg-red-900 dark:text-red-100">
-                        {anomaly.severity}
-                      </Badge>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{anomaly.user}</p>
-                      <p className="text-xs text-muted-foreground dark:text-gray-400">({anomaly.department})</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground dark:text-gray-400">{anomaly.description}</p>
-                    
-                    {/* Remedy Suggestion */}
-                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-md border border-blue-200 dark:border-blue-800">
-                      <div className="flex items-start space-x-2">
-                        <ShieldAlert className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs font-medium text-blue-900 dark:text-blue-300 mb-1">Recommended Action:</p>
-                          <p className="text-xs text-blue-800 dark:text-blue-400">
-                            {getAnomalyRemedySuggestion(anomaly)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+              <div key={anomaly.id} className="flex items-center justify-between p-4 border dark:border-gray-600 rounded-lg bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/50 dark:to-orange-950/50">
+                <div className="space-y-2 flex-1">
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={
+                      anomaly.severity === 'HIGH' ? 'destructive' :
+                      anomaly.severity === 'MEDIUM' ? 'default' : 'secondary'
+                    } className="dark:bg-red-900 dark:text-red-100">
+                      {anomaly.severity}
+                    </Badge>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{anomaly.user}</p>
+                    <p className="text-xs text-muted-foreground dark:text-gray-400">({anomaly.department})</p>
                   </div>
-                  <div className="p-2 bg-red-100 dark:bg-red-900 rounded-full ml-4">
-                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                  </div>
+                  <p className="text-sm text-muted-foreground dark:text-gray-400">{anomaly.description}</p>
                 </div>
-                
-                {/* Action Buttons */}
-                <div className="px-4 pb-4 flex gap-2">
-                  <Button size="sm" variant="outline" className="text-xs dark:border-gray-600 dark:hover:bg-gray-700">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Mark Resolved
-                  </Button>
-                  <Button size="sm" variant="outline" className="text-xs dark:border-gray-600 dark:hover:bg-gray-700">
-                    <UserX className="h-3 w-3 mr-1" />
-                    Take Action
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="text-xs"
-                    onClick={() => navigateToAnomalies()}
-                  >
-                    View All
-                  </Button>
+                <div className="p-2 bg-red-100 dark:bg-red-900 rounded-full ml-4">
+                  <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
                 </div>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
+
+      {/* Activity Detail Modal */}
+      <ActivityDetailModal
+        activityId={selectedActivity?.id || null}
+        activityType={selectedActivity?.type || 'asset_update'}
+        isOpen={!!selectedActivity}
+        onClose={() => setSelectedActivity(null)}
+      />
     </div>
   );
 } 
