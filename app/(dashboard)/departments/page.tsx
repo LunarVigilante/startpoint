@@ -20,6 +20,10 @@ import {
   Edit,
   Save,
   X,
+  ChevronDown,
+  ChevronUp,
+  Shield,
+  Key,
 } from "lucide-react";
 
 type Department = {
@@ -68,6 +72,12 @@ function DepartmentsContent() {
   const [error, setError] = useState('')
   const [editingBaseline, setEditingBaseline] = useState<Department | null>(null)
   const [saving, setSaving] = useState(false)
+  const [showHealthExplanation, setShowHealthExplanation] = useState(false)
+  const [tempEditValues, setTempEditValues] = useState({
+    standardAssets: '',
+    requiredGroups: '',
+    commonLicenses: ''
+  })
 
   useEffect(() => {
     fetchDepartments()
@@ -90,22 +100,36 @@ function DepartmentsContent() {
   const handleSaveBaseline = async (dept: Department) => {
     try {
       setSaving(true)
+      
+      // Process the temporary values
+      const standardAssets = (tempEditValues.standardAssets || dept.standardAssets?.join(', ') || '')
+        .split(',').map(s => s.trim()).filter(s => s)
+      const requiredGroups = (tempEditValues.requiredGroups || dept.requiredGroups?.join(', ') || '')
+        .split(',').map(s => s.trim()).filter(s => s)
+      const commonLicenses = (tempEditValues.commonLicenses || dept.commonLicenses?.join(', ') || '')
+        .split(',').map(s => s.trim()).filter(s => s)
+      
       const response = await fetch('/api/departments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           department: dept.department,
           siteId: dept.siteId,
-          standardAssets: dept.standardAssets,
-          requiredGroups: dept.requiredGroups,
+          standardAssets,
+          requiredGroups,
           requiredLists: dept.requiredLists,
-          commonLicenses: dept.commonLicenses,
+          commonLicenses,
         }),
       })
       
       if (!response.ok) throw new Error('Failed to save baseline')
       
       setEditingBaseline(null)
+      setTempEditValues({
+        standardAssets: '',
+        requiredGroups: '',
+        commonLicenses: ''
+      })
       fetchDepartments() // Refresh data
     } catch (err: any) {
       setError(err.message)
@@ -182,19 +206,36 @@ function DepartmentsContent() {
         </div>
       </div>
 
-      {/* Health Score Explanation */}
+      {/* Health Score Explanation - Collapsible */}
       <Card className="dark:bg-gray-800 dark:border-gray-700 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
         <CardContent className="pt-6">
           <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="font-semibold text-blue-900 dark:text-blue-300">Understanding Department Health Scores</h3>
               </div>
-              <div>
-                <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">Understanding Department Health Scores</h3>
-                <p className="text-sm text-blue-800 dark:text-blue-400 mb-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowHealthExplanation(!showHealthExplanation)}
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+              >
+                {showHealthExplanation ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            
+            {showHealthExplanation && (
+              <div className="space-y-3">
+                <p className="text-sm text-blue-800 dark:text-blue-400">
                   Health scores provide a comprehensive view of each department's IT standardization and security posture. 
-                  Scores are calculated based on multiple factors to help identify areas for improvement.
+                  Calculated using: 30% user activity, 25% asset allocation, 25% task completion, 20% anomaly-free operation.
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
@@ -203,7 +244,7 @@ function DepartmentsContent() {
                     <p className="text-gray-600 dark:text-gray-400">
                       • Low anomaly count<br/>
                       • High user activity<br/>
-                      • Standardized equipment<br/>
+                      • Proper asset allocation<br/>
                       • Completed tasks
                     </p>
                   </div>
@@ -229,7 +270,7 @@ function DepartmentsContent() {
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -320,7 +361,14 @@ function DepartmentsContent() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setEditingBaseline(dept)}
+                    onClick={() => {
+                      setEditingBaseline(dept)
+                      setTempEditValues({
+                        standardAssets: dept.standardAssets?.join(', ') || '',
+                        requiredGroups: dept.requiredGroups?.join(', ') || '',
+                        commonLicenses: dept.commonLicenses?.join(', ') || ''
+                      })
+                    }}
                     className="dark:border-gray-600 dark:hover:bg-gray-700"
                   >
                     <Edit className="h-4 w-4" />
@@ -376,11 +424,15 @@ function DepartmentsContent() {
               </div>
 
               {/* Baseline Info */}
-              {dept.standardAssets && dept.standardAssets.length > 0 && (
-                <div className="space-y-2 text-sm">
+              <div className="space-y-3 text-sm">
+                {/* Standard Assets */}
+                {dept.standardAssets && dept.standardAssets.length > 0 && (
                   <div>
-                    <span className="font-medium dark:text-gray-300">Standard Assets:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Package className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                      <span className="font-medium dark:text-gray-300">Standard Assets:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
                       {dept.standardAssets.slice(0, 3).map((asset: any, index: number) => (
                         <Badge key={index} variant="outline" className="text-xs dark:border-gray-600 dark:text-gray-300">
                           {typeof asset === 'string' ? asset : asset.name}
@@ -393,8 +445,61 @@ function DepartmentsContent() {
                       )}
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* Required Groups */}
+                {dept.requiredGroups && dept.requiredGroups.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Shield className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                      <span className="font-medium dark:text-gray-300">Required Groups:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {dept.requiredGroups.slice(0, 3).map((group: any, index: number) => (
+                        <Badge key={index} variant="outline" className="text-xs bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300">
+                          {typeof group === 'string' ? group : group.name}
+                        </Badge>
+                      ))}
+                      {dept.requiredGroups.length > 3 && (
+                        <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300">
+                          +{dept.requiredGroups.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Common Licenses */}
+                {dept.commonLicenses && dept.commonLicenses.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Key className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                      <span className="font-medium dark:text-gray-300">Common Licenses:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {dept.commonLicenses.slice(0, 3).map((license: any, index: number) => (
+                        <Badge key={index} variant="outline" className="text-xs bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300">
+                          {typeof license === 'string' ? license : license.name}
+                        </Badge>
+                      ))}
+                      {dept.commonLicenses.length > 3 && (
+                        <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300">
+                          +{dept.commonLicenses.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Show message if no baseline data */}
+                {(!dept.standardAssets || dept.standardAssets.length === 0) && 
+                 (!dept.requiredGroups || dept.requiredGroups.length === 0) && 
+                 (!dept.commonLicenses || dept.commonLicenses.length === 0) && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400 italic">
+                    No baseline configuration set
+                  </div>
+                )}
+              </div>
 
               {/* Actions */}
               <div className="flex space-x-2 pt-2">
@@ -405,7 +510,14 @@ function DepartmentsContent() {
                   variant="outline" 
                   size="sm" 
                   className="flex-1 dark:border-gray-600 dark:hover:bg-gray-700"
-                  onClick={() => setEditingBaseline(dept)}
+                  onClick={() => {
+                    setEditingBaseline(dept)
+                    setTempEditValues({
+                      standardAssets: dept.standardAssets?.join(', ') || '',
+                      requiredGroups: dept.requiredGroups?.join(', ') || '',
+                      commonLicenses: dept.commonLicenses?.join(', ') || ''
+                    })
+                  }}
                 >
                   Manage Baseline
                 </Button>
@@ -439,7 +551,14 @@ function DepartmentsContent() {
                 Manage Baseline: {editingBaseline.department}
               </h3>
               <button
-                onClick={() => setEditingBaseline(null)}
+                onClick={() => {
+                  setEditingBaseline(null)
+                  setTempEditValues({
+                    standardAssets: '',
+                    requiredGroups: '',
+                    commonLicenses: ''
+                  })
+                }}
                 className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <X className="w-5 h-5" />
@@ -452,10 +571,10 @@ function DepartmentsContent() {
                   Standard Assets (comma-separated)
                 </label>
                 <textarea
-                  value={editingBaseline.standardAssets?.join(', ') || ''}
-                  onChange={(e) => setEditingBaseline({
-                    ...editingBaseline,
-                    standardAssets: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                  value={tempEditValues.standardAssets || editingBaseline.standardAssets?.join(', ') || ''}
+                  onChange={(e) => setTempEditValues({
+                    ...tempEditValues,
+                    standardAssets: e.target.value
                   })}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -468,10 +587,10 @@ function DepartmentsContent() {
                   Required Groups (comma-separated)
                 </label>
                 <textarea
-                  value={editingBaseline.requiredGroups?.join(', ') || ''}
-                  onChange={(e) => setEditingBaseline({
-                    ...editingBaseline,
-                    requiredGroups: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                  value={tempEditValues.requiredGroups || editingBaseline.requiredGroups?.join(', ') || ''}
+                  onChange={(e) => setTempEditValues({
+                    ...tempEditValues,
+                    requiredGroups: e.target.value
                   })}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -484,10 +603,10 @@ function DepartmentsContent() {
                   Common Licenses (comma-separated)
                 </label>
                 <textarea
-                  value={editingBaseline.commonLicenses?.join(', ') || ''}
-                  onChange={(e) => setEditingBaseline({
-                    ...editingBaseline,
-                    commonLicenses: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                  value={tempEditValues.commonLicenses || editingBaseline.commonLicenses?.join(', ') || ''}
+                  onChange={(e) => setTempEditValues({
+                    ...tempEditValues,
+                    commonLicenses: e.target.value
                   })}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

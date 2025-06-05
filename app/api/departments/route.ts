@@ -81,12 +81,17 @@ export async function GET(request: NextRequest) {
       const todoTasks = Number(dept.todoTasks);
       const anomalies = Number(dept.anomalies);
       
-      const assetCompliance = totalAssets > 0 ? (totalAssets / Math.max(userCount, 1)) * 100 : 0;
-      const userActivity = userCount > 0 ? (activeUsers / userCount) * 100 : 0;
-      const anomalyPenalty = Math.min(anomalies * 5, 30); // Max 30% penalty
+      // Better asset compliance calculation - accounts for asset allocation
+      const assetRatio = userCount > 0 ? totalAssets / userCount : 0;
+      const assetCompliance = Math.min(100, assetRatio * 50 + 50); // 1:1 ratio = 100%, 0.5:1 = 75%, etc.
       
+      const userActivity = userCount > 0 ? (activeUsers / userCount) * 100 : 100; // Default to 100% if no users
+      const taskCompletion = totalTasks > 0 ? ((totalTasks - todoTasks) / totalTasks) * 100 : 100;
+      const anomalyPenalty = Math.min(anomalies * 10, 50); // Max 50% penalty
+      
+      // Weighted calculation: 30% user activity, 25% asset compliance, 25% task completion, 20% anomaly-free
       const healthScore = Math.max(0, Math.min(100, 
-        (assetCompliance * 0.4 + userActivity * 0.4 + (100 - anomalyPenalty) * 0.2)
+        (userActivity * 0.3 + assetCompliance * 0.25 + taskCompletion * 0.25 + (100 - anomalyPenalty) * 0.2)
       ));
 
       return {

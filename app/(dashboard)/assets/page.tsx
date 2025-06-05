@@ -38,11 +38,30 @@ type Asset = {
   status: 'AVAILABLE' | 'ASSIGNED' | 'MAINTENANCE' | 'RETIRED' | 'LOST' | 'STOLEN'
   condition?: string | null
   location?: string | null
+  
+  // Enhanced tracking fields
+  cost?: number | null
+  notes?: string | null
+  
+  // Purchase information
   purchaseDate?: Date | null
   purchasePrice?: number | null
   vendor?: string | null
   invoiceNumber?: string | null
   warrantyExpiry?: Date | null
+  
+  // Hardware specifications
+  specifications?: any
+  
+  // Mobile device specific fields
+  imei?: string | null
+  phoneNumber?: string | null
+  
+  // Photo and documentation
+  photoUrl?: string | null
+  photoFilename?: string | null
+  
+  // System fields
   history?: any
   maintenanceLog?: any
   createdAt: Date
@@ -89,6 +108,14 @@ type NewAsset = {
   gpuModel: string
   screenSize: string
   resolution: string
+  // Printer specifications
+  printerType: string
+  printTechnology: string
+  colorSupport: string
+  duplexSupport: string
+  tonerType: string
+  maxPaperSize: string
+  connectivityType: string
 }
 
 type AssetStatus = Asset['status']
@@ -124,6 +151,7 @@ export default function AssetsPage() {
   const [filterType, setFilterType] = useState<AssetType | 'ALL'>('ALL')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showInventoryModal, setShowInventoryModal] = useState(false)
   const [editingAsset, setEditingAsset] = useState<AssetWithUser | null>(null)
   const [saving, setSaving] = useState(false)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -157,7 +185,15 @@ export default function AssetsPage() {
     storageType: 'HDD',
     gpuModel: '',
     screenSize: '',
-    resolution: ''
+    resolution: '',
+    // Printer specifications
+    printerType: '',
+    printTechnology: '',
+    colorSupport: '',
+    duplexSupport: '',
+    tonerType: '',
+    maxPaperSize: '',
+    connectivityType: ''
   })
 
   useEffect(() => {
@@ -307,7 +343,15 @@ export default function AssetsPage() {
         storageType: 'HDD',
         gpuModel: '',
         screenSize: '',
-        resolution: ''
+        resolution: '',
+        // Printer specifications
+        printerType: '',
+        printTechnology: '',
+        colorSupport: '',
+        duplexSupport: '',
+        tonerType: '',
+        maxPaperSize: '',
+        connectivityType: ''
       })
       setPhotoFile(null)
       setPhotoPreview(null)
@@ -389,6 +433,7 @@ export default function AssetsPage() {
     const isComputer = ['LAPTOP', 'DESKTOP'].includes(newAsset.type)
     const hasScreen = ['LAPTOP', 'MONITOR', 'PHONE', 'TABLET'].includes(newAsset.type)
     const isMobile = ['PHONE', 'TABLET'].includes(newAsset.type)
+    const isPrinter = newAsset.type === 'PRINTER'
 
     return (
       <div className="space-y-4">
@@ -526,6 +571,120 @@ export default function AssetsPage() {
             </div>
           </div>
         )}
+        
+        {isPrinter && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Printer Type
+              </label>
+              <Select value={newAsset.printerType} onValueChange={(value) => setNewAsset({ ...newAsset, printerType: value })}>
+                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <SelectValue placeholder="Select printer type" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                  <SelectItem value="Printer">Printer Only</SelectItem>
+                  <SelectItem value="MFP">Multifunction (Print/Scan/Copy)</SelectItem>
+                  <SelectItem value="Scanner">Scanner Only</SelectItem>
+                  <SelectItem value="Fax">Fax Machine</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Print Technology
+              </label>
+              <Select value={newAsset.printTechnology} onValueChange={(value) => setNewAsset({ ...newAsset, printTechnology: value })}>
+                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <SelectValue placeholder="Select technology" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                  <SelectItem value="Laser">Laser</SelectItem>
+                  <SelectItem value="Inkjet">Inkjet</SelectItem>
+                  <SelectItem value="Thermal">Thermal</SelectItem>
+                  <SelectItem value="Dot Matrix">Dot Matrix</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Color Support
+              </label>
+              <Select value={newAsset.colorSupport} onValueChange={(value) => setNewAsset({ ...newAsset, colorSupport: value })}>
+                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <SelectValue placeholder="Select color support" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                  <SelectItem value="Color">Color</SelectItem>
+                  <SelectItem value="Black & White">Black & White Only</SelectItem>
+                  <SelectItem value="Monochrome">Monochrome</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Duplex Support
+              </label>
+              <Select value={newAsset.duplexSupport} onValueChange={(value) => setNewAsset({ ...newAsset, duplexSupport: value })}>
+                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <SelectValue placeholder="Select duplex capability" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                  <SelectItem value="Automatic">Automatic Duplex</SelectItem>
+                  <SelectItem value="Manual">Manual Duplex</SelectItem>
+                  <SelectItem value="None">No Duplex</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Toner/Ink Type
+              </label>
+              <Input
+                type="text"
+                value={newAsset.tonerType}
+                onChange={(e) => setNewAsset({ ...newAsset, tonerType: e.target.value })}
+                placeholder="HP 305XL, Brother TN-760, etc."
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Max Paper Size
+              </label>
+              <Select value={newAsset.maxPaperSize} onValueChange={(value) => setNewAsset({ ...newAsset, maxPaperSize: value })}>
+                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <SelectValue placeholder="Select max paper size" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                  <SelectItem value="Letter">Letter (8.5x11)</SelectItem>
+                  <SelectItem value="Legal">Legal (8.5x14)</SelectItem>
+                  <SelectItem value="A4">A4</SelectItem>
+                  <SelectItem value="A3">A3</SelectItem>
+                  <SelectItem value="Tabloid">Tabloid (11x17)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Connectivity
+              </label>
+              <Input
+                type="text"
+                value={newAsset.connectivityType}
+                onChange={(e) => setNewAsset({ ...newAsset, connectivityType: e.target.value })}
+                placeholder="USB, Ethernet, WiFi, Bluetooth"
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -566,13 +725,22 @@ export default function AssetsPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Assets Management</h1>
           <p className="text-gray-600 dark:text-gray-400">Manage hardware assets and assignments</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-        >
-          <Plus className="w-4 h-4" />
-          Add Asset
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowInventoryModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+          >
+            <Package className="w-4 h-4" />
+            Inventory
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+          >
+            <Plus className="w-4 h-4" />
+            Add Asset
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -696,7 +864,7 @@ export default function AssetsPage() {
                   Asset
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Type
+                  Type & Specs
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Status
@@ -706,6 +874,9 @@ export default function AssetsPage() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Location
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Cost/Value
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Actions
@@ -730,10 +901,26 @@ export default function AssetsPage() {
                          </div>
                        </div>
                      </td>
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       <span className="text-sm text-gray-900 dark:text-white">
-                         {asset.type.replace('_', ' ')}
-                       </span>
+                     <td className="px-6 py-4">
+                       <div className="text-sm">
+                         <div className="font-medium text-gray-900 dark:text-white">
+                           {asset.type.replace('_', ' ')}
+                         </div>
+                         <div className="text-gray-500 dark:text-gray-400 text-xs space-y-1 mt-1">
+                           {asset.manufacturer && <div>• {asset.manufacturer} {asset.model}</div>}
+                           {asset.specifications && (
+                             <>
+                               {asset.specifications.ram && <div>• RAM: {asset.specifications.ram}</div>}
+                               {asset.specifications.cpu && <div>• CPU: {asset.specifications.cpu}</div>}
+                               {asset.specifications.storage && <div>• Storage: {asset.specifications.storage} {asset.specifications.storageType}</div>}
+                               {asset.specifications.screenSize && <div>• Display: {asset.specifications.screenSize}"</div>}
+                               {asset.specifications.printerType && <div>• {asset.specifications.printerType} {asset.specifications.printTechnology}</div>}
+                               {asset.specifications.colorSupport && <div>• {asset.specifications.colorSupport}</div>}
+                             </>
+                           )}
+                           {asset.imei && <div>• IMEI: {asset.imei}</div>}
+                         </div>
+                       </div>
                      </td>
                      <td className="px-6 py-4 whitespace-nowrap">
                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${StatusColors[asset.status as keyof typeof StatusColors]}`}>
@@ -776,6 +963,25 @@ export default function AssetsPage() {
                       <span className="text-sm text-gray-900 dark:text-white">
                         {asset.location || asset.site.name}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm">
+                        {asset.cost && (
+                          <div className="font-medium text-gray-900 dark:text-white">
+                            ${Number(asset.cost).toLocaleString()}
+                          </div>
+                        )}
+                        {asset.purchasePrice && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            Purchase: ${Number(asset.purchasePrice).toLocaleString()}
+                          </div>
+                        )}
+                        {asset.purchaseDate && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(asset.purchaseDate).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end gap-2">
@@ -1306,6 +1512,183 @@ export default function AssetsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Inventory Modal */}
+      {showInventoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Inventory Management</h3>
+              <button
+                onClick={() => setShowInventoryModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Inventory Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
+                    <Package className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-green-800 dark:text-green-300">In Stock</p>
+                    <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                      {assets.filter(a => a.status === 'AVAILABLE').length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center">
+                    <Laptop className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-blue-800 dark:text-blue-300">Deployed</p>
+                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                      {assets.filter(a => a.status === 'ASSIGNED').length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-yellow-100 dark:bg-yellow-800 rounded-full flex items-center justify-center">
+                    <Package className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">Maintenance</p>
+                    <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">
+                      {assets.filter(a => a.status === 'MAINTENANCE').length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-gray-100 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                    <Package className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Value</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      ${assets.reduce((sum, asset) => sum + (Number(asset.cost) || 0), 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Available Assets Table */}
+            <div>
+              <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Available Assets</h4>
+              <div className="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Asset
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Type
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Condition
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Location
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Value
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
+                      {assets.filter(asset => asset.status === 'AVAILABLE').map((asset) => {
+                        const IconComponent = AssetTypeIcons[asset.type as keyof typeof AssetTypeIcons] || Package
+                        return (
+                          <tr key={asset.id} className="hover:bg-gray-50 dark:hover:bg-gray-600">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <IconComponent className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" />
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {asset.name}
+                                  </div>
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    {asset.assetTag}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm text-gray-900 dark:text-white">
+                                {asset.type.replace('_', ' ')}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                asset.condition === 'Excellent' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                                asset.condition === 'Good' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+                                asset.condition === 'Fair' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
+                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                              }`}>
+                                {asset.condition || 'Unknown'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm text-gray-900 dark:text-white">
+                                {asset.location || asset.site.name}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                {asset.cost ? `$${Number(asset.cost).toLocaleString()}` : '-'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <button
+                                onClick={() => {
+                                  handleEditAsset(asset)
+                                  setShowInventoryModal(false)
+                                }}
+                                className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
+                              >
+                                Assign
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {assets.filter(asset => asset.status === 'AVAILABLE').length === 0 && (
+                  <div className="text-center py-12">
+                    <Package className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No available assets</h3>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      All assets are currently assigned or unavailable
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

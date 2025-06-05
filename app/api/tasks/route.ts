@@ -139,4 +139,78 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, status, priority, assignedTo, notes } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Task ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if task exists
+    const existingTask = await withRetry(() => prisma.task.findUnique({
+      where: { id },
+    }));
+    
+    if (!existingTask) {
+      return NextResponse.json(
+        { error: 'Task not found' },
+        { status: 404 }
+      );
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+    if (status !== undefined) updateData.status = status;
+    if (priority !== undefined) updateData.priority = priority;
+    if (assignedTo !== undefined) updateData.assignedTo = assignedTo;
+    if (notes !== undefined) updateData.notes = notes;
+
+    const task = await withRetry(() => prisma.task.update({
+      where: { id },
+      data: updateData,
+      include: {
+        creator: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        asset: {
+          select: {
+            name: true,
+            assetTag: true,
+          },
+        },
+      },
+    }));
+
+    return NextResponse.json(task);
+  } catch (error: any) {
+    console.error('Error updating task:', error);
+    
+    if (error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Task not found' },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: 'Failed to update task' },
+      { status: 500 }
+    );
+  }
 } 
