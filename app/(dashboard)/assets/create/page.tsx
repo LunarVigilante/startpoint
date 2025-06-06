@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,7 +93,7 @@ const assetTemplates: AssetTemplate[] = [
   }
 ];
 
-export default function CreateAssetPage() {
+function CreateAssetPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = (searchParams.get('mode') as CreateMode) || 'scratch';
@@ -542,5 +542,13 @@ export default function CreateAssetPage() {
         </form>
       )}
     </div>
+  );
+}
+
+export default function CreateAssetPage() {
+  return (
+    <Suspense fallback={<div className="p-6"><div>Loading...</div></div>}>
+      <CreateAssetPageContent />
+    </Suspense>
   );
 } 
